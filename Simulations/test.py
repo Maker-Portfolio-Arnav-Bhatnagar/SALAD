@@ -20,6 +20,7 @@ with mujoco.viewer.launch_passive(model, data) as viewer:
     while viewer.is_running():
         data.ctrl[0] = 1.0      # Set the control input
         data.ctrl[3] = 1.0
+        data.ctrl[1] = 0.529
         mujoco.mj_step(model, data)  # Advance the simulation
         viewer.sync()           # Update the viewer
 
