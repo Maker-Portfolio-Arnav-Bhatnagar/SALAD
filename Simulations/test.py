@@ -18,7 +18,9 @@ for i in range(model.njnt):
 
 with mujoco.viewer.launch_passive(model, data) as viewer:
     while viewer.is_running():
-        mujoco.mj_step(model, data)
-        viewer.sync()
+        data.ctrl[0] = 0.5      # Set the control input
+        mujoco.mj_step(model, data)  # Advance the simulation
+        viewer.sync()           # Update the viewer
+        print(data.qpos)
         
 
