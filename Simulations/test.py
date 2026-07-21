@@ -13,6 +13,9 @@ print("\nNumber of joints:", model.njnt)
 print("Number of actuators:", model.nu)
 print("Number of bodies:", model.nbody)
 
+for i in range(model.njnt):
+    print(i, model.joint(i).name)
+
 with mujoco.viewer.launch_passive(model, data) as viewer:
     while viewer.is_running():
         mujoco.mj_step(model, data)
