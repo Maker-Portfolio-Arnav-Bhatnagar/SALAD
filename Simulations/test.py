@@ -41,7 +41,7 @@ with mujoco.viewer.launch_passive(model, data) as viewer:
 
         t = data.time
 
-        data.ctrl[0] = 0.5 * math.sin(t)
+        #data.ctrl[0] = 0.5 * math.sin(t)
 
         mujoco.mj_step(model, data)
         viewer.sync()
