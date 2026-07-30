@@ -26,10 +26,12 @@ task.set_target_from_configuration(configuration)
 target_rotation = task.transform_target_to_world.rotation()
 
 cube_position = np.array([0.45, 0.00, 0.02])
-lift_position = np.array([0.45, 0.00, 0.30])
-drop_position = np.array([0.45, 0.30, 0.02]) 
-
 above_cube    = np.array([0.45, 0.00, 0.10])
+lift_position = np.array([0.45, 0.00, 0.30])
+drop_position = np.array([0.45, 0.30, 0.02])
+finish_position = np.array([0.45, 0.30, 0.6])
+
+
 target = mink.SE3.from_rotation_and_translation(rotation=target_rotation,translation=above_cube,)
 task.set_target(target)
 
@@ -91,5 +93,9 @@ with mujoco.viewer.launch_passive(model, data) as viewer: #Launches sim
 
         elif state == "move_to_drop" and distance < 0.01:
             state = "finished"
+
+        if state == "finished":
+            target = mink.SE3.from_rotation_and_translation(rotation=target_rotation,translation=finish_position,)
+            task.set_target(target)    
 
         viewer.sync()
