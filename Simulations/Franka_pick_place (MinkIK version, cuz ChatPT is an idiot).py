@@ -10,8 +10,7 @@ from pathlib import Path
 from mink.tasks import FrameTask
 
 #Importing scene model
-scene_path = Path(__file__).parent / "franka_emika_panda" / "scene.xml"
-model = mujoco.MjModel.from_xml_path(str(scene_path))
+model = mujoco.MjModel.from_xml_path(str(Path(__file__).parent / "franka_emika_panda" / "scene.xml"))
 data = mujoco.MjData(model)
 
 #Retrieving configuration data
