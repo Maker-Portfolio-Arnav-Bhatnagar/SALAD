@@ -45,6 +45,8 @@ with mujoco.viewer.launch_passive(model, data) as viewer: #Launches sim
         configuration.integrate_inplace(velocity,dt)
         data.qpos[:] = configuration.q
 
+        data.ctrl[7] = 0
+
         mujoco.mj_forward(model,data)
 
         current_pose = configuration.get_transform_frame_to_world("ee_site", "site")
