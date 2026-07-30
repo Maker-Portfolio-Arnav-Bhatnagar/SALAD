@@ -84,12 +84,6 @@ with mujoco.viewer.launch_passive(model, data) as viewer: #Launches sim
                 task.set_target(target)
                 state = "lift"
 
-        elif state == "lift":
-            distance = np.linalg.norm(current_position - lift_position)
-            if distance < 0.01:
-                print("Lift complete!")
-                state = "finished"
-
         elif state == "lift" and distance < 0.01:
             target = mink.SE3.from_rotation_and_translation(rotation=target_rotation,translation=drop_position,)
             task.set_target(target)
