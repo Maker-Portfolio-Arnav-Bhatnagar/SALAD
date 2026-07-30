@@ -33,7 +33,7 @@ drop_position = np.array([0.45, 0.30, 0.02])
 rest_position = np.array([0.45, 0.20, 0.4])
 
 #Setting initial target
-target = mink.SE3.from_rotation_and_translation(rotation=target_rotation,translation=above_cube,) #Tells the robot where to go
+target = mink.SE3.from_rotation_and_translation(rotation=target_rotation,translation=init_position,) #Tells the robot where to go
 task.set_target(target)
 
 state = "init_pos" #Basic state tracker
@@ -64,7 +64,10 @@ with mujoco.viewer.launch_passive(model, data) as viewer: #Launches sim
         #Calculating the distance from actual end effector to its theoretical target
         current_pose = configuration.get_transform_frame_to_world("ee_site", "site")
         current_position = current_pose.translation()
-        if state == "move_above":
+
+        if state == "init_pos":
+            distance = np.linalg.norm(current_position - init_position)
+        elif state == "move_above":
             distance = np.linalg.norm(current_position - above_cube)
         elif state == "move_down":
             distance = np.linalg.norm(current_position - cube_position)
@@ -74,10 +77,10 @@ with mujoco.viewer.launch_passive(model, data) as viewer: #Launches sim
             distance = np.linalg.norm(current_position - drop_position)
 
         #Reassigns target based on the current state & distance from prior target, then updates the state
-        if state == "init_pos":
-            target = mink.SE3.from_rotation_and_translation(rotation=target_rotation,translation=init_position,)
+        if state == "init_pos" and distance < 0.01:
+            target = mink.SE3.from_rotation_and_translation(rotation=target_rotation,translation=above_cube,)
             task.set_target(target)
-            state = "move_down"
+            state = "move_above"
 
         elif state == "move_above" and distance < 0.01:
             target = mink.SE3.from_rotation_and_translation(rotation=target_rotation,translation=cube_position,)
