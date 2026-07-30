@@ -16,7 +16,7 @@ data = mujoco.MjData(model)
 ee_site_id = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_SITE, "ee_site")
  
 #Settings for the IK controller
-POSITION_TOLERANCE = 0.1    #(m) how close counts as "arrived"
+POSITION_TOLERANCE = 0.01    #(m) how close counts as "arrived"
 ORIENTATION_TOLERANCE = 0.1  #(rad) how close counts as "arrived"
 GAIN = 2.0                    #How aggressively we chase the error each step
 MAX_LINEAR_VEL = 0.3          #(m/s) cap on end-effector speed
