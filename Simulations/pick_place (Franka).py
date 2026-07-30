@@ -43,7 +43,7 @@ with mujoco.viewer.launch_passive(model, data) as viewer: #Launches sim
         velocity = np.clip(velocity, -0.5, 0.5)
 
         configuration.integrate_inplace(velocity,dt)
-        data.qpos[:] = configuration.q
+        data.qpos[:7] = configuration.q[:7]
 
         data.ctrl[7] = 255
 
@@ -57,9 +57,5 @@ with mujoco.viewer.launch_passive(model, data) as viewer: #Launches sim
             target = mink.SE3.from_rotation_and_translation(rotation=target_rotation,translation=at_cube,)
             task.set_target(target)
             state = "move_down"
-
-        print(configuration.q.shape)
-        print(configuration.q)
-        print(data.qpos.shape)
 
         viewer.sync()
