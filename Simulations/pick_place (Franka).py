@@ -46,6 +46,7 @@ with mujoco.viewer.launch_passive(model, data) as viewer: #Launches sim
         data.qpos[:7] = configuration.q[:7]
 
         data.qpos[7] = 0.04
+        data.qpos[8] = 0.04
 
         mujoco.mj_forward(model,data)
 
