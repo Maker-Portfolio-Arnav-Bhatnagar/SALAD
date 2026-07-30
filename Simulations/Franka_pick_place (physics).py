@@ -67,6 +67,7 @@ with mujoco.viewer.launch_passive(model, data) as viewer: #Launches sim
 
         #Calculating the distance from actual end effector to its theoretical target
         current_pose = configuration.get_transform_frame_to_world("ee_site", "site")
+        print(current_pose.rotation().as_matrix())
         current_position = current_pose.translation()
         if state == "move_above":
             distance = np.linalg.norm(current_position - above_cube)
