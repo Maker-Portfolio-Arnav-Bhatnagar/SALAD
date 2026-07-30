@@ -24,7 +24,6 @@ print(configuration.q)
 task = FrameTask(frame_name="ee_site",frame_type="site",position_cost=1.0,orientation_cost=0.1,)
 task.set_target_from_configuration(configuration)
 target_rotation = (mink.SO3.from_z_radians(np.pi / 4).multiply(task.transform_target_to_world.rotation()))
-print(dir(target_rotation))
 
 #Coordinates for positions (X Y Z)
 cube_position = np.array([0.45, 0.00, 0.02])
@@ -49,20 +48,16 @@ with mujoco.viewer.launch_passive(model, data) as viewer: #Launches sim
         velocity = mink.solve_ik(configuration=configuration,tasks=[task],dt=dt,solver="daqp",) #Computes joint velocities needed for ee_site to move to target
         velocity = np.clip(velocity, -0.5, 0.5) #Limits max speed for smoother motion
 
-        # Integrate inside Mink
-        configuration.integrate_inplace(velocity, dt)
-
-        # Desired joint angles
-        desired_q = configuration.q[:7]
+        configuration.integrate_inplace(velocity, dt) #Updates joint positions using computed velocities
+        desired_q = configuration.q[:7] #Computes desired joint angles
         
-        # Command MuJoCo actuators
-        data.ctrl[:7] = desired_q
+        data.ctrl[:7] = desired_q #Commands MuJoCo actuators to use the desired joint angles
 
         #Gripper positions
         if state in ["move_above", "move_down", "finished"]:
-            data.ctrl[7] = 255      # open
+            data.ctrl[7] = 255  # open
         else:
-            data.ctrl[7] = -10        # close
+            data.ctrl[7] = -10  # close
 
         mujoco.mj_step(model, data)
 
@@ -78,6 +73,7 @@ with mujoco.viewer.launch_passive(model, data) as viewer: #Launches sim
         elif state == "move_to_drop":
             distance = np.linalg.norm(current_position - drop_position)
 
+        #Reassigns target based on the current state & distance from prior target, then updates the state
         if state == "move_above" and distance < 0.01:
             target = mink.SE3.from_rotation_and_translation(rotation=target_rotation,translation=cube_position,)
             task.set_target(target)
@@ -104,6 +100,7 @@ with mujoco.viewer.launch_passive(model, data) as viewer: #Launches sim
 
         if state == "finished":
             target = mink.SE3.from_rotation_and_translation(rotation=target_rotation,translation=rest_position,)
-            task.set_target(target)    
+            task.set_target(target)
+            print('Finished')    
 
         viewer.sync()
