@@ -25,11 +25,12 @@ task = FrameTask(frame_name="ee_site",frame_type="site",position_cost=1.0,orient
 task.set_target_from_configuration(configuration)
 target_rotation = task.transform_target_to_world.rotation()
 
+#Positions (X Y Z)
 cube_position = np.array([0.45, 0.00, 0.02])
 above_cube    = np.array([0.45, 0.00, 0.10])
 lift_position = np.array([0.45, 0.00, 0.30])
 drop_position = np.array([0.45, 0.30, 0.02])
-finish_position = np.array([0.45, 0.20, 0.4])
+rest_position = np.array([0.45, 0.20, 0.4])
 
 target = mink.SE3.from_rotation_and_translation(rotation=target_rotation,translation=above_cube,)
 task.set_target(target)
@@ -94,7 +95,7 @@ with mujoco.viewer.launch_passive(model, data) as viewer: #Launches sim
             state = "finished"
 
         if state == "finished":
-            target = mink.SE3.from_rotation_and_translation(rotation=target_rotation,translation=finish_position,)
+            target = mink.SE3.from_rotation_and_translation(rotation=target_rotation,translation=rest_position_position,)
             task.set_target(target)    
 
         viewer.sync()
