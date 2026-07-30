@@ -26,12 +26,15 @@ task.set_target_from_configuration(configuration)
 target_rotation = task.transform_target_to_world.rotation()
 
 cube_position = np.array([0.45, 0.00, 0.25])
-above_cube = np.array([0.45, 0.00, 0.30])
+lift_position = np.array([0.45, 0.00, 0.30])
+drop_position = np.array([0.20, 0.20, 0.30]) 
+
 at_cube    = np.array([0.45, 0.00, 0.10])
 target = mink.SE3.from_rotation_and_translation(rotation=target_rotation,translation=at_cube,)
 task.set_target(target)
 
-state = "move_above"
+state = "move_to_cube"
+wait_counter = 0
 
 #Running the simulation
 with mujoco.viewer.launch_passive(model, data) as viewer: #Launches sim
