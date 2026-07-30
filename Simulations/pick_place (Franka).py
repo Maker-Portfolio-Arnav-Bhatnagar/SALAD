@@ -45,7 +45,7 @@ with mujoco.viewer.launch_passive(model, data) as viewer: #Launches sim
         configuration.integrate_inplace(velocity,dt)
         data.qpos[:] = configuration.q
 
-        data.ctrl[7] = 0
+        data.ctrl[7] = 255
 
         mujoco.mj_forward(model,data)
 
