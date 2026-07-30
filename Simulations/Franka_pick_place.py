@@ -11,13 +11,12 @@ from pathlib import Path
 scene_path = Path(__file__).parent / "franka_emika_panda" / "scene.xml"
 model = mujoco.MjModel.from_xml_path(str(scene_path))
 data = mujoco.MjData(model)
-mujoco.mj_forward(model, data)
  
 #Finding the ID of the end-effector site so we can read its position/orientation each step
 ee_site_id = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_SITE, "ee_site")
  
 #Settings for the IK controller
-POSITION_TOLERANCE = 1    #(m) how close counts as "arrived"
+POSITION_TOLERANCE = 0.1    #(m) how close counts as "arrived"
 ORIENTATION_TOLERANCE = 0.1  #(rad) how close counts as "arrived"
 GAIN = 2.0                    #How aggressively we chase the error each step
 MAX_LINEAR_VEL = 0.3          #(m/s) cap on end-effector speed
