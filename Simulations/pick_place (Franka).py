@@ -48,18 +48,46 @@ with mujoco.viewer.launch_passive(model, data) as viewer: #Launches sim
         configuration.integrate_inplace(velocity,dt)
         data.qpos[:7] = configuration.q[:7]
 
-        data.qpos[7] = 0.04
-        data.qpos[8] = 0.04
+        if state in ["move_above", "move_down"]:
+            # Open gripper
+            data.qpos[7] = 0.04
+            data.qpos[8] = 0.04
+        else:
+            # Closed gripper
+            data.qpos[7] = 0.00
+            data.qpos[8] = 0.00
 
         mujoco.mj_forward(model,data)
 
         current_pose = configuration.get_transform_frame_to_world("ee_site", "site")
         current_position = current_pose.translation()
-        distance = np.linalg.norm(current_position - above_cube)
+
+        if state == "move_above":
+            distance = np.linalg.norm(current_position - above_cube)
+        elif state == "move_down":
+            distance = np.linalg.norm(current_position - cube_position)
+        elif state == "lift":
+            distance = np.linalg.norm(current_position - lift_position)
 
         if state == "move_above" and distance < 0.01:
             target = mink.SE3.from_rotation_and_translation(rotation=target_rotation,translation=cube_position,)
             task.set_target(target)
             state = "move_down"
+
+        elif state == "move_down" and distance < 0.01:
+            state = "close_gripper"
+
+        if state == "close_gripper":
+            wait_counter += 1
+            if wait_counter > 100:
+                target = mink.SE3.from_rotation_and_translation(rotation=target_rotation,translation=lift_position,)
+                task.set_target(target)
+                state = "lift"
+                
+        elif state == "lift":
+            distance = np.linalg.norm(current_position - lift_position)
+            if distance < 0.01:
+                print("Lift complete!")
+                state = "finished"
 
         viewer.sync()
