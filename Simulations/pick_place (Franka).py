@@ -47,4 +47,13 @@ with mujoco.viewer.launch_passive(model, data) as viewer: #Launches sim
 
         mujoco.mj_forward(model,data)
 
+        current_pose = configuration.get_transform_frame_to_world("ee_site", "site")
+        current_position = current_pose.translation()
+        distance = np.linalg.norm(current_position - above_cube)
+
+        if state == "move_above" and distance < 0.01:
+            target = mink.SE3.from_rotation_and_translation(rotation=target_rotation,translation=at_cube,)
+            task.set_target(target)
+            state = "move_down"
+
         viewer.sync()
