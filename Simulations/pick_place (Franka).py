@@ -25,7 +25,7 @@ task = FrameTask(frame_name="ee_site",frame_type="site",position_cost=1.0,orient
 task.set_target_from_configuration(configuration)
 target_rotation = task.transform_target_to_world.rotation()
 
-cube_position = np.array([0.45, 0.00, 0.25])
+cube_position = np.array([0.45, 0.00, 0.02])
 lift_position = np.array([0.45, 0.00, 0.30])
 drop_position = np.array([0.20, 0.20, 0.30]) 
 
@@ -83,7 +83,7 @@ with mujoco.viewer.launch_passive(model, data) as viewer: #Launches sim
                 target = mink.SE3.from_rotation_and_translation(rotation=target_rotation,translation=lift_position,)
                 task.set_target(target)
                 state = "lift"
-                
+
         elif state == "lift":
             distance = np.linalg.norm(current_position - lift_position)
             if distance < 0.01:
