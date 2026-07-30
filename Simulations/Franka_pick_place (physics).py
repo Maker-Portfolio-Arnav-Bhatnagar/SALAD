@@ -62,7 +62,7 @@ with mujoco.viewer.launch_passive(model, data) as viewer: #Launches sim
         if state in ["move_above", "move_down", "finished"]:
             data.ctrl[7] = 255      # open
         else:
-            data.ctrl[7] = 0        # close
+            data.ctrl[7] = -5        # close
 
         mujoco.mj_step(model, data)
 
