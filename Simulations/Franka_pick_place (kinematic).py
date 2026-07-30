@@ -45,11 +45,12 @@ with mujoco.viewer.launch_passive(model, data) as viewer: #Launches sim
     dt = 0.005 #Controls sim speed
     while viewer.is_running():
 
-        velocity = mink.solve_ik(configuration=configuration,tasks=[task],dt=dt,solver="daqp",)
-        velocity = np.clip(velocity, -0.5, 0.5)
+        velocity = mink.solve_ik(configuration=configuration,tasks=[task],dt=dt,solver="daqp",) #Computes joint velocities needed for ee_site to move to target
+        velocity = np.clip(velocity, -0.5, 0.5) #Limits max speed for smoother motion
 
-        configuration.integrate_inplace(velocity,dt)
-        data.qpos[:7] = configuration.q[:7]
+        configuration.integrate_inplace(velocity,dt) #Updates joint positions using computed velocities
+
+        data.qpos[:7] = configuration.q[:7] #Updates the simulation
 
         #Gripper positions
         if state in ["move_above", "move_down", "finished"]:
