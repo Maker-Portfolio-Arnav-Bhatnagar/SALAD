@@ -27,7 +27,7 @@ target_rotation = task.transform_target_to_world.rotation()
 
 cube_position = np.array([0.45, 0.00, 0.02])
 lift_position = np.array([0.45, 0.00, 0.30])
-drop_position = np.array([0.10, 0.20, 0.02]) 
+drop_position = np.array([0.10, 0.00, 0.02]) 
 
 above_cube    = np.array([0.45, 0.00, 0.10])
 target = mink.SE3.from_rotation_and_translation(rotation=target_rotation,translation=above_cube,)
