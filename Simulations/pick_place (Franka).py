@@ -58,4 +58,8 @@ with mujoco.viewer.launch_passive(model, data) as viewer: #Launches sim
             task.set_target(target)
             state = "move_down"
 
+        print(configuration.q.shape)
+        print(configuration.q)
+        print(data.qpos.shape)
+
         viewer.sync()
