@@ -23,7 +23,7 @@ print(configuration.q)
 #Creating new frametask & setting the target to the cube's location
 task = FrameTask(frame_name="ee_site",frame_type="site",position_cost=1.0,orientation_cost=0.1,)
 task.set_target_from_configuration(configuration)
-target_rotation = task.transform_target_to_world.rotation()
+target_rotation = (task.transform_target_to_world.rotation()* mink.SO3.from_z_radians(np.pi / 2))
 
 #Coordinates for positions (X Y Z)
 cube_position = np.array([0.45, 0.00, 0.02])
