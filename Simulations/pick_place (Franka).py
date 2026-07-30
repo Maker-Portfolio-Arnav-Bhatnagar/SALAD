@@ -47,15 +47,15 @@ with mujoco.viewer.launch_passive(model, data) as viewer: #Launches sim
         velocity = mink.solve_ik(configuration=configuration,tasks=[task],dt=dt,solver="daqp",) 
         velocity = np.clip(velocity, -0.5, 0.5)
 
-        configuration.integrate_inplace(velocity,dt)
-        data.qpos[:7] = configuration.q[:7]
+        configuration.integrate_inplace(velocity, dt)
+        data.ctrl[:7] = configuration.q[:7]
+        mujoco.mj_step(model, data)
+        configuration.update(data.qpos)
 
         if state in ["move_above", "move_down", "finished"]:
-            data.qpos[7] = 0.04
-            data.qpos[8] = 0.04
+            data.ctrl[7] = 255 #Open
         else:
-            data.qpos[7] = 0.00
-            data.qpos[8] = 0.00
+            data.ctrl[7] = 0.00 #Closed
 
         mujoco.mj_forward(model,data)
 
