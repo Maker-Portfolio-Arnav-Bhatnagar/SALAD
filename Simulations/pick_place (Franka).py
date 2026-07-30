@@ -29,11 +29,11 @@ cube_position = np.array([0.45, 0.00, 0.25])
 lift_position = np.array([0.45, 0.00, 0.30])
 drop_position = np.array([0.20, 0.20, 0.30]) 
 
-at_cube    = np.array([0.45, 0.00, 0.10])
-target = mink.SE3.from_rotation_and_translation(rotation=target_rotation,translation=at_cube,)
+above_cube    = np.array([0.45, 0.00, 0.10])
+target = mink.SE3.from_rotation_and_translation(rotation=target_rotation,translation=above_cube,)
 task.set_target(target)
 
-state = "move_to_cube"
+state = "move_above"
 wait_counter = 0
 
 #Running the simulation
@@ -58,7 +58,7 @@ with mujoco.viewer.launch_passive(model, data) as viewer: #Launches sim
         distance = np.linalg.norm(current_position - above_cube)
 
         if state == "move_above" and distance < 0.01:
-            target = mink.SE3.from_rotation_and_translation(rotation=target_rotation,translation=at_cube,)
+            target = mink.SE3.from_rotation_and_translation(rotation=target_rotation,translation=cube_position,)
             task.set_target(target)
             state = "move_down"
 
