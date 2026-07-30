@@ -24,7 +24,7 @@ print(configuration.q)
 task = FrameTask(frame_name="ee_site",frame_type="site",position_cost=1.0,orientation_cost=0.1,)
 task.set_target_from_configuration(configuration)
 target_rotation = (
-    mink.SO3.from_z_radians(np.pi / 2)
+    mink.SO3.from_z_radians(np.pi)
         .multiply(task.transform_target_to_world.rotation())
 )
 print(dir(target_rotation))
