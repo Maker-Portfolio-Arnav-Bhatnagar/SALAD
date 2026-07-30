@@ -48,12 +48,10 @@ with mujoco.viewer.launch_passive(model, data) as viewer: #Launches sim
         configuration.integrate_inplace(velocity,dt)
         data.qpos[:7] = configuration.q[:7]
 
-        if state in ["move_above", "move_down"]:
-            # Open gripper
+        if state in ["move_above", "move_down", "finished"]:
             data.qpos[7] = 0.04
             data.qpos[8] = 0.04
         else:
-            # Closed gripper
             data.qpos[7] = 0.00
             data.qpos[8] = 0.00
 
@@ -68,6 +66,8 @@ with mujoco.viewer.launch_passive(model, data) as viewer: #Launches sim
             distance = np.linalg.norm(current_position - cube_position)
         elif state == "lift":
             distance = np.linalg.norm(current_position - lift_position)
+        elif state == "move_to_drop":
+            distance = np.linalg.norm(current_position - drop_position)
 
         if state == "move_above" and distance < 0.01:
             target = mink.SE3.from_rotation_and_translation(rotation=target_rotation,translation=cube_position,)
@@ -94,5 +94,8 @@ with mujoco.viewer.launch_passive(model, data) as viewer: #Launches sim
             target = mink.SE3.from_rotation_and_translation(rotation=target_rotation,translation=drop_position,)
             task.set_target(target)
             state = "move_to_drop"
+
+        elif state == "move_to_drop" and distance < 0.01:
+            state = "finished"
 
         viewer.sync()
