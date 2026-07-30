@@ -90,4 +90,9 @@ with mujoco.viewer.launch_passive(model, data) as viewer: #Launches sim
                 print("Lift complete!")
                 state = "finished"
 
+        elif state == "lift" and distance < 0.01:
+            target = mink.SE3.from_rotation_and_translation(rotation=target_rotation,translation=drop_position,)
+            task.set_target(target)
+            state = "move_to_drop"
+
         viewer.sync()
