@@ -25,9 +25,9 @@ task = FrameTask(frame_name="ee_site",frame_type="site",position_cost=1.0,orient
 task.set_target_from_configuration(configuration)
 target_rotation = task.transform_target_to_world.rotation()
 
-cube_position = np.array([0.55, 0.00, 0.25])
-above_cube = np.array([0.55, 0.00, 0.30])
-at_cube    = np.array([0.55, 0.00, 0.10])
+cube_position = np.array([0.45, 0.00, 0.25])
+above_cube = np.array([0.45, 0.00, 0.30])
+at_cube    = np.array([0.45, 0.00, 0.10])
 target = mink.SE3.from_rotation_and_translation(rotation=target_rotation,translation=at_cube,)
 task.set_target(target)
 
