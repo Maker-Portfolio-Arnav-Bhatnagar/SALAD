@@ -1,4 +1,4 @@
-#Simulation: Pick & Place (Franka FR3)
+#Simulation: Franka Pick & Place (Kinematic)
 #Using Mink library & MinkIK to pick & place a simple cube with a Franka FR3 in Mujoco
 
 #Importing libraries
@@ -25,17 +25,18 @@ task = FrameTask(frame_name="ee_site",frame_type="site",position_cost=1.0,orient
 task.set_target_from_configuration(configuration)
 target_rotation = task.transform_target_to_world.rotation()
 
-#Positions (X Y Z)
+#Coordinates for positions (X Y Z)
 cube_position = np.array([0.45, 0.00, 0.02])
 above_cube    = np.array([0.45, 0.00, 0.10])
 lift_position = np.array([0.45, 0.00, 0.30])
 drop_position = np.array([0.45, 0.30, 0.02])
 rest_position = np.array([0.45, 0.20, 0.4])
 
-target = mink.SE3.from_rotation_and_translation(rotation=target_rotation,translation=above_cube,)
+#Setting initial target
+target = mink.SE3.from_rotation_and_translation(rotation=target_rotation,translation=above_cube,) #Tells the robot where to go
 task.set_target(target)
 
-state = "move_above"
+state = "move_above" #Basic state tracker
 wait_counter = 0
 
 #Running the simulation
@@ -44,24 +45,25 @@ with mujoco.viewer.launch_passive(model, data) as viewer: #Launches sim
     dt = 0.005 #Controls sim speed
     while viewer.is_running():
 
-        velocity = mink.solve_ik(configuration=configuration,tasks=[task],dt=dt,solver="daqp",) 
+        velocity = mink.solve_ik(configuration=configuration,tasks=[task],dt=dt,solver="daqp",)
         velocity = np.clip(velocity, -0.5, 0.5)
 
-        configuration.integrate_inplace(velocity, dt)
-        data.ctrl[:7] = configuration.q[:7]
-        mujoco.mj_step(model, data)
-        configuration.update(data.qpos)
+        configuration.integrate_inplace(velocity,dt)
+        data.qpos[:7] = configuration.q[:7]
 
+        #Gripper positions
         if state in ["move_above", "move_down", "finished"]:
-            data.ctrl[7] = 255 #Open
+            data.qpos[7] = 0.04
+            data.qpos[8] = 0.04
         else:
-            data.ctrl[7] = 0.00 #Closed
+            data.qpos[7] = 0.00
+            data.qpos[8] = 0.00
 
         mujoco.mj_forward(model,data)
 
+        #Calculating the distance from actual end effector to its theoretical target
         current_pose = configuration.get_transform_frame_to_world("ee_site", "site")
         current_position = current_pose.translation()
-
         if state == "move_above":
             distance = np.linalg.norm(current_position - above_cube)
         elif state == "move_down":
@@ -95,7 +97,7 @@ with mujoco.viewer.launch_passive(model, data) as viewer: #Launches sim
             state = "finished"
 
         if state == "finished":
-            target = mink.SE3.from_rotation_and_translation(rotation=target_rotation,translation=rest_position_position,)
+            target = mink.SE3.from_rotation_and_translation(rotation=target_rotation,translation=rest_position,)
             task.set_target(target)    
 
         viewer.sync()
