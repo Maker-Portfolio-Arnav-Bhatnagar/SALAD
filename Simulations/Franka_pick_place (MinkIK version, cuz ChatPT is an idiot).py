@@ -25,7 +25,6 @@ task.set_target_from_configuration(configuration)
 target_rotation = (mink.SO3.from_z_radians(np.pi / 4).multiply(task.transform_target_to_world.rotation()))
 
 #Coordinates for positions (X Y Z)
-init_position = np.array([0.45, 0.00, 0.5])
 cube_position = np.array([0.45, 0.00, 0.02])
 above_cube    = np.array([0.45, 0.00, 0.10])
 lift_position = np.array([0.45, 0.00, 0.30])
@@ -33,10 +32,10 @@ drop_position = np.array([0.45, 0.30, 0.02])
 rest_position = np.array([0.45, 0.20, 0.4])
 
 #Setting initial target
-target = mink.SE3.from_rotation_and_translation(rotation=target_rotation,translation=init_position,) #Tells the robot where to go
+target = mink.SE3.from_rotation_and_translation(rotation=target_rotation,translation=above_cube,) #Tells the robot where to go
 task.set_target(target)
 
-state = "init_pos" #Basic state tracker
+state = "move_above" #Basic state tracker
 wait_counter = 0
 
 #Running the simulation
@@ -64,10 +63,7 @@ with mujoco.viewer.launch_passive(model, data) as viewer: #Launches sim
         #Calculating the distance from actual end effector to its theoretical target
         current_pose = configuration.get_transform_frame_to_world("ee_site", "site")
         current_position = current_pose.translation()
-
-        if state == "init_pos":
-            distance = np.linalg.norm(current_position - init_position)
-        elif state == "move_above":
+        if state == "move_above":
             distance = np.linalg.norm(current_position - above_cube)
         elif state == "move_down":
             distance = np.linalg.norm(current_position - cube_position)
@@ -77,12 +73,7 @@ with mujoco.viewer.launch_passive(model, data) as viewer: #Launches sim
             distance = np.linalg.norm(current_position - drop_position)
 
         #Reassigns target based on the current state & distance from prior target, then updates the state
-        if state == "init_pos" and distance < 0.01:
-            target = mink.SE3.from_rotation_and_translation(rotation=target_rotation,translation=above_cube,)
-            task.set_target(target)
-            state = "move_above"
-
-        elif state == "move_above" and distance < 0.01:
+        if state == "move_above" and distance < 0.01:
             target = mink.SE3.from_rotation_and_translation(rotation=target_rotation,translation=cube_position,)
             task.set_target(target)
             state = "move_down"
