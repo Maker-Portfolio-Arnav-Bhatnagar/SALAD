@@ -1,12 +1,15 @@
+#Pick Place (Franka):
+#Simple code to pick & place a cube using a Franka FR3 robot
+
 #!/usr/bin/env python3
-from _future_ import annotations
+from __future__ import annotations
 import os, sys, time
 import numpy as np
 import rclpy
 from rclpy.executors import MultiThreadedExecutor
 
 PROJECT_ROOT = os.path.dirname(
-    os.path.dirname(os.path.dirname(os.path.abspath(_file_)))
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 )
 if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
@@ -38,8 +41,8 @@ def main(args=None):
         robot_description_topic="/NS_1/robot_description",
         ee_pose_topic=None,
         ee_pose_is_stamped=False,
-        max_cartesian_vel=0.25,
-        max_angular_vel=0.25,
+        max_cartesian_vel=0.17,
+        max_angular_vel=0.17,
         dt=0.01,
         damping=0.03,
     )
@@ -64,35 +67,29 @@ def main(args=None):
                 robotB.get_logger().warn(f"Timeout at {name}")
                 break
 
-        robotB.publish_zero_velocity()
         time.sleep(0.3)
 
     # ---------------- POSITIONS ----------------
 
-    POS1 = [0.45251871374475783, -0.02033126129394388, 0.17926676018161913]
-    QUAT1 = [0.9103652577315129, -0.4128565467403135,
-             -0.02628048398543751, 0.009690484538489988]
+    PICK_POS = [0.6151722180084411, -0.04675817075829586, 0.1507172036929535]
+    PICK_QUAT = [0.9208164128617827, -0.38895860442545854, -0.02843004791606157, -0.0002649966960190266]
 
-    POS2 = [0.4530152262884078, -0.011781334955463256, 0.18222219588404157]
-    QUAT2 = [0.9130839393211533, -0.4058866408766574,
-             -0.011638397714697735, 0.037393879315502476]
+    POS2 = [0.4287406375189319, -0.30689361698925977, 0.3837058885233575]
+    QUAT2 = [0.9184099316444361, -0.39545923684161366, 0.009802773736811583, -0.006252605902784995]
 
-    POS3 = [0.4519261174767757, -0.033347772163313784, 0.1847477097679242]
-    QUAT3 = [0.9059893381151105, -0.4195046612530423,
-             -0.04685933767824142, -0.03167587222272914]
+    PLACE_POS = [0.49262495730561356, -0.5186854477752654, 0.16798802875832192]
+    PLACE_QUAT = [0.9251516457019573, -0.3795919664139947, 0.0012463626502968118, 0.0016787105351086956]
 
-    POS4 = [0.4492033867409548, -0.01029258178553643, 0.18622842929577677]
-    QUAT4 = [0.9128259365568111, -0.40632218554719585,
-             -0.008437769006119795, 0.03974789473079201]
-
-    POS5 = [0.4452253351459746, -0.016027448402670317, 0.20099818262036315]
-    QUAT5 = [0.9097573840666969, -0.4143783570781459,
-             -0.0022063186953863393, 0.025044190526979176]
+    REST_POS = [0.3584641619510052, -0.036976077522332576, 0.49373634152165496]
+    REST_QUAT = [0.9216499759579432, -0.38669263218892913, 0.031486742575119436, -0.006222143483426112]
 
     try:
 
-        # ---------- MOVE TO POS1 ----------
-        move_and_wait(POS1, QUAT1, "POS1")
+        # ---------- OPEN GRIPPER AT START (JUST TO BE SAFE) ----------
+        gripper.open_gripper(width=0.08)
+
+        # ---------- MOVE TO PICK_POS ----------
+        move_and_wait(PICK_POS, PICK_QUAT, "PICK_POS")
 
         # ---------- CLOSE GRIPPER ----------
         robotB.get_logger().info("Closing gripper")
@@ -101,9 +98,15 @@ def main(args=None):
 
         # ---------- FOLLOW WAYPOINTS ----------
         move_and_wait(POS2, QUAT2, "POS2")
-        move_and_wait(POS3, QUAT3, "POS3")
-        move_and_wait(POS4, QUAT4, "POS4")
-        move_and_wait(POS5, QUAT5, "POS5")
+        
+        # ---------- MOVE TO PLACE POS ----------
+        move_and_wait(PLACE_POS, PLACE_QUAT, "PLACE_POS")
+
+        # ---------- OPEN GRIPPER ----------
+        gripper.open_gripper(width=0.08)
+
+        # ---------- MOVE TO REST POS ----------
+        move_and_wait(REST_POS, REST_QUAT, "REST_POS")
 
         robotB.get_logger().info("Sequence complete.")
 
@@ -112,6 +115,5 @@ def main(args=None):
         robotB.destroy_node()
         rclpy.shutdown()
 
-
-if _name_ == "_main_":
+if __name__ == "__main__":
     main()
