@@ -1,4 +1,5 @@
 import rclpy
+import cv2
 from rclpy.node import Node
 from sensor_msgs.msg import Image as ROSImage
 from cv_bridge import CvBridge
