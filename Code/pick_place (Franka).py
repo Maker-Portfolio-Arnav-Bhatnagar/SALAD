@@ -18,7 +18,7 @@ from utils.dls_velocity_commander import DLSVelocityCommander
 from utils.gripper_commands.franka_gripper import FrankaGripperController
 
 
-# -------------------------------------------------------
+#Main function
 def main(args=None):
     rclpy.init(args=args)
 
@@ -50,7 +50,7 @@ def main(args=None):
     executor = MultiThreadedExecutor()
     executor.add_node(robotB)
 
-    # -------------------------------------------------------
+    #Move helper function
     def move_and_wait(pos, quat, name, timeout=8.0):
         robotB.get_logger().info(f"Moving to {name}")
         robotB.set_target(pos, quat)
@@ -69,7 +69,7 @@ def main(args=None):
 
         time.sleep(0.3)
 
-    # ---------------- POSITIONS ----------------
+    #Positions (Coords & Quats)
 
     PICK_POS = [0.6151722180084411, -0.04675817075829586, 0.1507172036929535]
     PICK_QUAT = [0.9208164128617827, -0.38895860442545854, -0.02843004791606157, -0.0002649966960190266]
