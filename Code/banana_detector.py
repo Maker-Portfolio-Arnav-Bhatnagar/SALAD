@@ -3,11 +3,11 @@ from rclpy.node import Node
 from sensor_msgs.msg import Image as ROSImage
 from cv_bridge import CvBridge
 
-class object_detect(Node):
+class banana_detect(Node):
 
     def __init__(self):
 
-        super().__init__('OBJECT_DETECTOR')
+        super().__init__('BANANA_DETECTOR')
 
         # Initialize CV Bridge
         self._bridge = CvBridge()
