@@ -29,6 +29,11 @@ class banana_detect(Node):
         """Store latest color image."""
         self._color_image = self._bridge.imgmsg_to_cv2(msg, "rgb8")
 
+        cv2.imshow("Camera", frame)
+        cv2.waitKey(1)
+
     def _depth_callback(self, msg)-> None:
         """Store latest depth image."""
         self._depth_image = self._bridge.imgmsg_to_cv2(msg, "32FC1") / 1e3
+
+
