@@ -14,13 +14,13 @@ class banana_detect(Node):
         self._bridge = CvBridge()
 
         # Create subscriptions
-        image_sub = self.create_subscription(
+        self.image_sub = self.create_subscription(
                     ROSImage,
                     '/camera/camera/color/image_raw',
                     self._image_callback,
                     10
                 )
-        depth_sub = self.create_subscription(
+        self.depth_sub = self.create_subscription(
                     ROSImage,
                     '/camera/camera/aligned_depth_to_color/image_raw',
                     self._depth_callback,
