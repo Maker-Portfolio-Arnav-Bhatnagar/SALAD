@@ -25,10 +25,10 @@ class banana_detect(Node):
                     self._depth_callback,
                     10
                 )
-        def _image_callback(self, msg)-> None:
-            """Store latest color image."""
-            self._color_image = self._bridge.imgmsg_to_cv2(msg, "rgb8")
+    def _image_callback(self, msg)-> None:
+        """Store latest color image."""
+        self._color_image = self._bridge.imgmsg_to_cv2(msg, "rgb8")
 
-        def _depth_callback(self, msg)-> None:
-            """Store latest depth image."""
-            self._depth_image = self._bridge.imgmsg_to_cv2(msg, "32FC1") / 1e3
+    def _depth_callback(self, msg)-> None:
+        """Store latest depth image."""
+        self._depth_image = self._bridge.imgmsg_to_cv2(msg, "32FC1") / 1e3
