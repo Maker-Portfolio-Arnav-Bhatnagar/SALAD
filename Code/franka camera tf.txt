@@ -1,1 +1,9 @@
-    [0.0124   -0.9864   -0.1640    0.4471   -0.9996   -0.0078   -0.0284   -0.4186    0.0267    0.1643   -0.9860    1.2320         0         0            0              1.0000]
+Final TF:
+
+[0.0124   -0.9864   -0.1640    0.4471   
+-0.9996   -0.0078   -0.0284   -0.4186    
+ 0.0267    0.1643   -0.9860    1.2320         
+ 0         0         0         1.0000]
+
+Above is the transformation matrix that converts camera's frame to franka's base frame
+Ex:  p_robot = T_CAM_TO_ROBOT X p_cam p_robot are coordinates in robot frame and p_cam are coordinates in camera frame
