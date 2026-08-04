@@ -28,7 +28,7 @@ class banana_detect(Node):
                 )
     def _image_callback(self, msg)-> None:
         """Store latest color image."""
-        self._color_image = self._bridge.imgmsg_to_cv2(msg, "bgr8")
+        self._color_image = self._bridge.imgmsg_to_cv2(msg, "rgb8")
 
         cv2.imshow("Camera", self._color_image)
         cv2.waitKey(1)
