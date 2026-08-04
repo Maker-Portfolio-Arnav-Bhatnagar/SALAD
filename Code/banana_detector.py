@@ -30,11 +30,25 @@ class banana_detect(Node):
         """Store latest color image."""
         self._color_image = self._bridge.imgmsg_to_cv2(msg, "bgr8")
 
-        cv2.imshow("Camera", frame)
+        cv2.imshow("Camera", self._color_image)
         cv2.waitKey(1)
 
     def _depth_callback(self, msg)-> None:
         """Store latest depth image."""
         self._depth_image = self._bridge.imgmsg_to_cv2(msg, "32FC1") / 1e3
+
+
+def main(args=None):
+    rclpy.init(args=args)
+
+    node = banana_detect()
+    rclpy.spin(node)
+
+    node.destroy_node()
+    rclpy.shutdown()
+
+
+if __name__ == "__main__":
+    main()
 
 
