@@ -56,7 +56,6 @@ class banana_detect(Node):
 
             # Largest detected object
             contour = max(contours, key=cv2.contourArea)
-
             area = cv2.contourArea(contour)
 
             # Ignore tiny blobs
