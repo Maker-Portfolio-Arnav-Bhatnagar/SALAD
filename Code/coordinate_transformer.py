@@ -1,6 +1,7 @@
 import numpy as np
 
-def coord_transform():
+#Transforms camera coordinates to Franka coords
+def franka_coordTransform():
 
     #Camera to robot base transformation matrix
     T_CAM_TO_ROBOT = np.array([[ 0.0124, -0.9864, -0.1640,  0.4471],
