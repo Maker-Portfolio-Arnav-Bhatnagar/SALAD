@@ -12,7 +12,6 @@ class banana_detect(Node):
         super().__init__('BANANA_DETECTOR')
 
 
-
         # Initialize CV Bridge
         self._bridge = CvBridge()
 
