@@ -32,9 +32,10 @@ class banana_detect(Node):
 
         self.get_logger().info("Received image")
         self.color_image = self._bridge.imgmsg_to_cv2(msg, "bgr8")
+        image = self.color_image.copy()
 
         # Convert BGR to HSV
-        hsv_image = cv2.cvtColor(self.color_image.copy(), cv2.COLOR_BGR2HSV)
+        hsv_image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
 
         # HSV range for yellow/orange banana. These numbers will likely need tuning.
         lower = (10, 80, 80)
@@ -49,11 +50,7 @@ class banana_detect(Node):
         mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
 
         # Find contours
-        contours, _ = cv2.findContours(
-            mask,
-            cv2.RETR_EXTERNAL,
-            cv2.CHAIN_APPROX_SIMPLE
-        )
+        contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
         if len(contours) > 0:
 
