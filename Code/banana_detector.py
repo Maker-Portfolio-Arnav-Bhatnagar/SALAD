@@ -19,13 +19,14 @@ class banana_detect(Node):
                     '/camera/camera/color/image_raw',
                     self._image_callback,
                     10
-                )
+                    )
         self.depth_sub = self.create_subscription(
                     ROSImage,
                     '/camera/camera/aligned_depth_to_color/image_raw',
                     self._depth_callback,
                     10
-                )
+                    )
+        
     def _image_callback(self, msg)-> None:
         """Store latest color image."""
 
