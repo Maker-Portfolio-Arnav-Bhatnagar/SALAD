@@ -63,7 +63,6 @@ class banana_detect(Node):
 
                 # Draw contour
                 cv2.drawContours(image, [contour], -1, (0, 255, 0), 2)
-
                 # Bounding rectangle
                 x, y, w, h = cv2.boundingRect(contour)
 
@@ -122,5 +121,3 @@ def main(args=None):
 
 if __name__ == "__main__":
     main()
-
-
