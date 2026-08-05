@@ -34,17 +34,13 @@ class banana_detect(Node):
         self.color_image = self._bridge.imgmsg_to_cv2(msg, "bgr8")
 
         # Convert BGR to HSV
-        image = self.color_image.copy()
-        hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+        hsv_image = cv2.cvtColor(self.color_image.copy(), cv2.COLOR_BGR2HSV)
 
-        # -------------------------------------------------
-        # HSV range for yellow/orange banana
-        # These numbers will likely need tuning.
-        # -------------------------------------------------
+        # HSV range for yellow/orange banana. These numbers will likely need tuning.
         lower = (10, 80, 80)
         upper = (40, 255, 255)
 
-        mask = cv2.inRange(hsv, lower, upper)
+        mask = cv2.inRange(hsv_image, lower, upper)
 
         # Remove small noise
         kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5))
