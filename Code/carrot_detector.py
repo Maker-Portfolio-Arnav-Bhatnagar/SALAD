@@ -1,3 +1,9 @@
+# carrot_detector.py:
+# Program takes Realsense camera input, and identifies a carrot (placed sideways) from live feed, 
+# Program then returns coordinates for 4 corners of a tight bounding box for carrot. Width of bounding box equal to that of the base of the carrot
+#   Also returns coordinates for the midpoint of the carrot, along with orientation
+#
+
 import numpy as np
 import rclpy
 import cv2
