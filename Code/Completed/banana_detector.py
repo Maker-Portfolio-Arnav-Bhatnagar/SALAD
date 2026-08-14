@@ -112,12 +112,11 @@ class BananaDetector(Node):
         return float(msg.header.stamp.sec) + float(msg.header.stamp.nanosec) * 1e-9
 
     @staticmethod
-    def _find_banana_contour(image: np.ndarray, lower: np.ndarray,
-                             upper: np.ndarray, minimum_area: float):
+    def _find_banana_contour(image: np.ndarray):
         """Create a clean yellow mask and return the largest banana-shaped region."""
         # HSV separates color from brightness better than the camera's BGR format
         hsv_image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
-        mask = cv2.inRange(hsv_image, lower, upper)
+        mask = cv2.inRange(hsv_image, LOWER_YELLOW_HSV, UPPER_YELLOW_HSV)
 
         # Opening removes isolated dots; closing fills small holes in the banana
         kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5))
@@ -127,7 +126,7 @@ class BananaDetector(Node):
         contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         large_contours = []
         for contour in contours:
-            if cv2.contourArea(contour) >= minimum_area:
+            if cv2.contourArea(contour) >= MINIMUM_BANANA_AREA:
                 large_contours.append(contour)
 
         if len(large_contours) == 0:
@@ -218,9 +217,7 @@ class BananaDetector(Node):
 
         image = self._bridge.imgmsg_to_cv2(msg, desired_encoding='bgr8')
         display = image.copy()
-        contour, mask = self._find_banana_contour(
-            image, LOWER_YELLOW_HSV, UPPER_YELLOW_HSV, MINIMUM_BANANA_AREA
-        )
+        contour, mask = self._find_banana_contour(image)
 
         if contour is not None:
             corners_float, angle = self._box_and_angle(contour)

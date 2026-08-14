@@ -64,8 +64,11 @@ def grasp_quaternion(banana_heading: float) -> list[float]:
 class FrankaPickPlace:
 
     def __init__(self, executor: MultiThreadedExecutor):
+        # The executor allows the robot controller to receive ROS messages while moving
         self.executor = executor
         self.gripper = FrankaGripperController()
+
+        # Create the same Franka velocity controller used by the working reference file
         self.robot = DLSVelocityCommander(
             robot_id='robotB',
             base_link='fr3_link0',
@@ -132,9 +135,11 @@ class FrankaPickPlace:
         # Detector sees the banana's upper surface; descend only a limited amount toward its centre
         centre_offset = min(max(surface_height * 0.35, 0.0), 0.025)
         pick_pos[2] = max(0.05, pick_pos[2] - centre_offset)
+        # Approach from 12 cm above instead of moving sideways into the banana
         approach_pos = pick_pos.copy()
         approach_pos[2] += 0.12
 
+        # PICK SEQUENCE: open -> approach -> descend -> close -> lift
         self.gripper.open_gripper(width=0.08)
         time.sleep(0.5)
         self.move_and_wait(approach_pos, quat, 'BANANA_APPROACH')
@@ -151,6 +156,7 @@ class FrankaPickPlace:
         approach_pos = place_pos.copy()
         approach_pos[2] += 0.12
 
+        # PLACE SEQUENCE: approach -> descend -> open -> lift -> rest
         self.move_and_wait(approach_pos, quat, 'PLACE_APPROACH')
         self.move_and_wait(place_pos, quat, 'PLACE_POSITION')
         self.gripper.open_gripper(width=0.08)
