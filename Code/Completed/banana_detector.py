@@ -216,16 +216,6 @@ class BananaDetector(Node):
 
         if contour is not None:
             contour_area = cv2.contourArea(contour)
-            cv2.putText(
-                display,
-                f'BANANA FOUND - area: {contour_area:.0f}',
-                (15, 30),
-                cv2.FONT_HERSHEY_SIMPLEX,
-                0.7,
-                (0, 255, 0),
-                2,
-            )
-
             # Draw these as soon as a contour is found - depth is not needed
             cv2.drawContours(display, [contour], -1, (0, 255, 0), 3)
             corners_float, angle = self._box_and_angle(contour)
@@ -279,16 +269,6 @@ class BananaDetector(Node):
                     )
                     self.latest_detection = detection
                     self.detection_pub.publish(String(data=json.dumps(asdict(detection))))
-        else:
-            cv2.putText(
-                display,
-                f'NO BANANA CONTOUR - minimum area: {MINIMUM_BANANA_AREA:.0f}',
-                (15, 30),
-                cv2.FONT_HERSHEY_SIMPLEX,
-                0.7,
-                (0, 0, 255),
-                2,
-            )
 
         if self.show_debug:
             cv2.imshow('Banana Mask', mask)
