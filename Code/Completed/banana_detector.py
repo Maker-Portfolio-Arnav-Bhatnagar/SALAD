@@ -80,6 +80,7 @@ class BananaDetector(Node):
             self.camera_info_callback,
             10,
         )
+        
         # The JSON topic makes it easy to inspect results with ros2 topic echo
         self.detection_pub = self.create_publisher(String, '/banana/detection', 10)
 
