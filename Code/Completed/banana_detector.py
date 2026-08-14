@@ -229,6 +229,20 @@ class BananaDetector(Node):
                 corners = tuple((int(round(x)), int(round(y))) for x, y in corners_float)
                 corner_depths = [self._valid_depth(*corner) for corner in corners]
 
+                # Draw the 2D result whenever the banana is visible
+                # This does not depend on the depth camera returning valid values
+                cv2.drawContours(display, [contour], -1, (0, 255, 0), 2)
+                for corner in corners:
+                    cv2.circle(display, corner, 5, (255, 0, 0), -1)
+                cv2.circle(display, midpoint, 6, (255, 0, 0), -1)
+
+                # Draw a blue line showing the banana's detected orientation
+                axis_end = (
+                    int(midpoint[0] + 70 * math.cos(angle)),
+                    int(midpoint[1] + 70 * math.sin(angle)),
+                )
+                cv2.line(display, midpoint, axis_end, (255, 0, 0), 2)
+
                 # Only publish after all five returned pixels have valid depth
                 if midpoint_depth is not None and all(depth is not None for depth in corner_depths):
                     midpoint_camera = self._deproject(midpoint, midpoint_depth)
@@ -248,17 +262,6 @@ class BananaDetector(Node):
                     )
                     self.latest_detection = detection
                     self.detection_pub.publish(String(data=json.dumps(asdict(detection))))
-
-                    # Green = detected outline; blue = returned coordinates and orientation
-                    cv2.drawContours(display, [contour], -1, (0, 255, 0), 2)
-                    for corner in corners:
-                        cv2.circle(display, corner, 5, (255, 0, 0), -1)
-                    cv2.circle(display, midpoint, 6, (255, 0, 0), -1)
-                    axis_end = (
-                        int(midpoint[0] + 70 * math.cos(angle)),
-                        int(midpoint[1] + 70 * math.sin(angle)),
-                    )
-                    cv2.line(display, midpoint, axis_end, (255, 0, 0), 2)
 
         if self.show_debug:
             cv2.imshow('Banana Mask', mask)
