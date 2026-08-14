@@ -3,11 +3,9 @@
 # Prints the banana midpoint, 4 bounding-box corners, orientation, depth & height to the terminal
 
 import math
-
 import rclpy
 
 from banana_detector import BananaDetector
-
 
 class BananaDetectorTest(BananaDetector):
 
