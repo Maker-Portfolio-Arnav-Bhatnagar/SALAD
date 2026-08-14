@@ -321,3 +321,35 @@ def main(args=None):
 if __name__ == '__main__':
     main()
 
+
+# FLOWCHART:
+#
+# Realsense sends color image, depth image & camera information
+#                         |
+#                         v
+# Convert color image from BGR to HSV
+#                         |
+#                         v
+# Keep yellow pixels & remove small amounts of noise
+#                         |
+#                         v
+# Find the largest yellow contour
+#                         |
+#                  Banana found?
+#                    /          \
+#                  No            Yes
+#                  |              |
+#                  v              v
+#          Display live feed   Find midpoint, tight box & orientation
+#                                 |
+#                                 v
+#                       Read depth at returned pixels
+#                                 |
+#                                 v
+#                     Convert pixels into 3D camera coords
+#                                 |
+#                                 v
+#                  Save & publish the BananaDetection result
+#                                 |
+#                                 v
+#                Draw contour, blue points & direction on feed
