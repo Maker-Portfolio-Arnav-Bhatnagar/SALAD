@@ -2,6 +2,7 @@
 # Runs banana_detector.py using the live Realsense feed and displays the detection windows
 # Prints the banana midpoint, 4 bounding-box corners, orientation, depth & height to the terminal
 
+import inspect
 import math
 import rclpy
 
@@ -18,6 +19,9 @@ class BananaDetectorTest(BananaDetector):
         self._print_timer = self.create_timer(0.10, self.print_latest_detection)
         self.get_logger().info(
             "Live banana detector test started - press Ctrl+C in this terminal to stop"
+        )
+        self.get_logger().info(
+            f"Loaded detector code from: {inspect.getfile(BananaDetector)}"
         )
 
     def print_latest_detection(self) -> None:

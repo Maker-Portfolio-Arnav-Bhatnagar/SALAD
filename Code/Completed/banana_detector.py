@@ -217,7 +217,20 @@ class BananaDetector(Node):
         contour, mask = self._find_banana_contour(image)
 
         if contour is not None:
+            # Draw these as soon as a contour is found - depth is not needed
+            cv2.drawContours(display, [contour], -1, (0, 255, 0), 3)
             corners_float, angle = self._box_and_angle(contour)
+            corners = tuple((int(round(x)), int(round(y))) for x, y in corners_float)
+            cv2.polylines(
+                display,
+                [np.asarray(corners, dtype=np.int32)],
+                True,
+                (255, 0, 0),
+                2,
+            )
+            for corner in corners:
+                cv2.circle(display, corner, 7, (255, 0, 0), -1)
+
             moments = cv2.moments(contour)
             if moments['m00'] > 0.0:
                 # Image midpoint calculated from the yellow region's moments
@@ -226,14 +239,9 @@ class BananaDetector(Node):
                     int(round(moments['m01'] / moments['m00'])),
                 )
                 midpoint_depth = self._valid_depth(*midpoint)
-                corners = tuple((int(round(x)), int(round(y))) for x, y in corners_float)
                 corner_depths = [self._valid_depth(*corner) for corner in corners]
 
-                # Draw the 2D result whenever the banana is visible
-                # This does not depend on the depth camera returning valid values
-                cv2.drawContours(display, [contour], -1, (0, 255, 0), 2)
-                for corner in corners:
-                    cv2.circle(display, corner, 5, (255, 0, 0), -1)
+                # Draw the banana midpoint
                 cv2.circle(display, midpoint, 6, (255, 0, 0), -1)
 
                 # Draw a blue line showing the banana's detected orientation
