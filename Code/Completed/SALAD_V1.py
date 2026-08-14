@@ -8,7 +8,7 @@ import rclpy
 from rclpy.executors import MultiThreadedExecutor
 
 from banana_detector import BananaDetector
-from coordinate_transformer import transform_carrot_angle, transform_point
+from coordinate_transformer import transform_object_angle, transform_point
 from pick_place import DEFAULT_PLACE_POS, FrankaPickPlace
 
 
@@ -28,7 +28,7 @@ def main(args=None):
 
         # Transform midpoint & long-axis orientation into the Franka base frame
         pick_pos = transform_point(detection.midpoint_camera).tolist()
-        banana_heading = transform_carrot_angle(detection.angle_camera)
+        banana_heading = transform_object_angle(detection.angle_camera)
         detector.get_logger().info(
             f"Stable banana found | Franka midpoint: {pick_pos} | "
             f"heading: {banana_heading:.3f} rad | height: {detection.surface_height:.3f} m"

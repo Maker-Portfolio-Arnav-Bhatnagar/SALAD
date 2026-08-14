@@ -65,7 +65,11 @@ def transform_carrot_angle(angle_camera: float) -> float:
     return float(np.arctan2(direction_robot[1], direction_robot[0]))
 
 
+# Generic name used by SALAD when detecting another fruit with the same geometry
+def transform_object_angle(angle_camera: float) -> float:
+    return transform_carrot_angle(angle_camera)
+
+
 # Kept with the original function name so older SALAD scripts can still call it
 def franka_coordTransform(coords: Iterable[float]) -> list[float]:
     return transform_point(coords).tolist()
-
