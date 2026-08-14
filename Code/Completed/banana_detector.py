@@ -216,19 +216,19 @@ class BananaDetector(Node):
 
         if contour is not None:
             contour_area = cv2.contourArea(contour)
-            # Draw these as soon as a contour is found - depth is not needed
-            cv2.drawContours(display, [contour], -1, (0, 255, 0), 3)
             corners_float, angle = self._box_and_angle(contour)
             corners = tuple((int(round(x)), int(round(y))) for x, y in corners_float)
+
+            # Draw the bounding box and its four red corner points
             cv2.polylines(
                 display,
                 [np.asarray(corners, dtype=np.int32)],
                 True,
-                (255, 0, 0),
+                (0, 0, 255),
                 2,
             )
             for corner in corners:
-                cv2.circle(display, corner, 7, (255, 0, 0), -1)
+                cv2.circle(display, corner, 7, (0, 0, 255), -1)
 
             moments = cv2.moments(contour)
             if moments['m00'] > 0.0:
@@ -240,15 +240,15 @@ class BananaDetector(Node):
                 midpoint_depth = self._valid_depth(*midpoint)
                 corner_depths = [self._valid_depth(*corner) for corner in corners]
 
-                # Draw the banana midpoint
-                cv2.circle(display, midpoint, 6, (255, 0, 0), -1)
+                # Draw the red banana midpoint
+                cv2.circle(display, midpoint, 6, (0, 0, 255), -1)
 
-                # Draw a blue line showing the banana's detected orientation
+                # Draw a red line showing the banana's detected orientation
                 axis_end = (
                     int(midpoint[0] + 70 * math.cos(angle)),
                     int(midpoint[1] + 70 * math.sin(angle)),
                 )
-                cv2.line(display, midpoint, axis_end, (255, 0, 0), 2)
+                cv2.line(display, midpoint, axis_end, (0, 0, 255), 2)
 
                 # Only publish after all five returned pixels have valid depth
                 if midpoint_depth is not None and all(depth is not None for depth in corner_depths):
