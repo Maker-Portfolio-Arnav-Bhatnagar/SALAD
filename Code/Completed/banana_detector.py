@@ -1,4 +1,4 @@
-﻿# banana_detector.py:
+# banana_detector.py:
 # Takes Realsense color, aligned depth & camera-info input and identifies one sideways banana
 # Returns a tight 4-corner box, banana midpoint, surface height & long-axis orientation
 # Keeps the newest valid result available for SALAD_V1 and publishes it as JSON for debugging
