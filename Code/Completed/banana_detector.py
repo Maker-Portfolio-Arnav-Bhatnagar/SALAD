@@ -26,7 +26,7 @@ from std_msgs.msg import String
 LOWER_YELLOW_HSV = np.array([18, 70, 70], dtype=np.uint8)
 UPPER_YELLOW_HSV = np.array([38, 255, 255], dtype=np.uint8)
 
-MINIMUM_BANANA_AREA = 1000.0 # Ignore yellow objects smaller than this number of pixels
+MINIMUM_BANANA_AREA = 300.0 # Ignore tiny yellow dots, but allow a distant banana
 MAXIMUM_DEPTH_AGE = 0.20 # Color and depth frames must be captured within this many seconds of each other
 
 @dataclass(frozen=True)
@@ -121,16 +121,14 @@ class BananaDetector(Node):
         mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel, iterations=2)
 
         contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-        large_contours = []
-        for contour in contours:
-            if cv2.contourArea(contour) >= MINIMUM_BANANA_AREA:
-                large_contours.append(contour)
-
-        if len(large_contours) == 0:
+        if len(contours) == 0:
             return None, mask
 
-        # Assume the largest valid yellow object is the banana
-        banana_contour = max(large_contours, key=cv2.contourArea)
+        # Assume the largest yellow object is the banana
+        banana_contour = max(contours, key=cv2.contourArea)
+        if cv2.contourArea(banana_contour) < MINIMUM_BANANA_AREA:
+            return None, mask
+
         return banana_contour, mask
 
     @staticmethod
@@ -217,6 +215,17 @@ class BananaDetector(Node):
         contour, mask = self._find_banana_contour(image)
 
         if contour is not None:
+            contour_area = cv2.contourArea(contour)
+            cv2.putText(
+                display,
+                f'BANANA FOUND - area: {contour_area:.0f}',
+                (15, 30),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.7,
+                (0, 255, 0),
+                2,
+            )
+
             # Draw these as soon as a contour is found - depth is not needed
             cv2.drawContours(display, [contour], -1, (0, 255, 0), 3)
             corners_float, angle = self._box_and_angle(contour)
@@ -265,11 +274,21 @@ class BananaDetector(Node):
                         corners_camera=corners_camera,
                         angle_camera=angle,
                         surface_height=self._estimate_surface_height(contour, midpoint_depth),
-                        contour_area=float(cv2.contourArea(contour)),
+                        contour_area=float(contour_area),
                         stamp_seconds=color_stamp,
                     )
                     self.latest_detection = detection
                     self.detection_pub.publish(String(data=json.dumps(asdict(detection))))
+        else:
+            cv2.putText(
+                display,
+                f'NO BANANA CONTOUR - minimum area: {MINIMUM_BANANA_AREA:.0f}',
+                (15, 30),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.7,
+                (0, 0, 255),
+                2,
+            )
 
         if self.show_debug:
             cv2.imshow('Banana Mask', mask)
