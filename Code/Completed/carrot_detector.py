@@ -36,8 +36,9 @@ class CarrotDetection:
 
 class CarrotDetector(Node):
 
-    def __init__(self, show_debug: bool = True):
-        super().__init__('carrot_detector')
+    def __init__(self, show_debug: bool = True, *, object_name: str = 'carrot',
+                 lower_hsv=(3, 90, 60), upper_hsv=(28, 255, 255)):
+        super().__init__(f'{object_name}_detector')
 
         # Initialize CV Bridge & newest sensor values
         self._bridge = CvBridge()
@@ -46,10 +47,11 @@ class CarrotDetector(Node):
         self._camera_matrix: Optional[np.ndarray] = None
         self.latest_detection: Optional[CarrotDetection] = None
         self.show_debug = show_debug
+        self.object_name = object_name
 
         # Detection parameters - HSV values may need small adjustments for the room lighting
-        self.lower_orange = np.array([3, 90, 60], dtype=np.uint8)
-        self.upper_orange = np.array([28, 255, 255], dtype=np.uint8)
+        self.lower_orange = np.array(lower_hsv, dtype=np.uint8)
+        self.upper_orange = np.array(upper_hsv, dtype=np.uint8)
         self.minimum_area = 1000.0
         self.maximum_depth_age = 0.20
 
@@ -72,9 +74,11 @@ class CarrotDetector(Node):
             self.camera_info_callback,
             10,
         )
-        self.detection_pub = self.create_publisher(String, '/carrot/detection', 10)
+        self.detection_pub = self.create_publisher(
+            String, f'/{self.object_name}/detection', 10
+        )
 
-        self.get_logger().info("Carrot detector started")
+        self.get_logger().info(f"{self.object_name.capitalize()} detector started")
 
     def camera_info_callback(self, msg: CameraInfo) -> None:
         """Store camera intrinsics used to turn a depth pixel into metres."""
@@ -221,8 +225,8 @@ class CarrotDetector(Node):
                     cv2.line(display, midpoint, axis_end, (255, 0, 0), 2)
 
         if self.show_debug:
-            cv2.imshow('Carrot Mask', mask)
-            cv2.imshow('Carrot Detection', display)
+            cv2.imshow(f'{self.object_name.capitalize()} Mask', mask)
+            cv2.imshow(f'{self.object_name.capitalize()} Detection', display)
             cv2.waitKey(1)
 
     def wait_for_detection(self, executor, timeout: float = 15.0,
@@ -258,7 +262,9 @@ class CarrotDetector(Node):
                         and np.max(np.abs(angle_errors)) < math.radians(8)):
                     return samples[-1]
 
-        raise TimeoutError("No stable carrot detection was received before timeout")
+        raise TimeoutError(
+            f"No stable {self.object_name} detection was received before timeout"
+        )
 
     def destroy_node(self):
         if self.show_debug:
