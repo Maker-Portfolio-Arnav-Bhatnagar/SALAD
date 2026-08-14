@@ -26,12 +26,8 @@ from std_msgs.msg import String
 LOWER_YELLOW_HSV = np.array([18, 70, 70], dtype=np.uint8)
 UPPER_YELLOW_HSV = np.array([38, 255, 255], dtype=np.uint8)
 
-# Ignore yellow objects smaller than this number of pixels
-MINIMUM_BANANA_AREA = 1000.0
-
-# Color and depth frames must be captured within this many seconds of each other
-MAXIMUM_DEPTH_AGE = 0.20
-
+MINIMUM_BANANA_AREA = 1000.0 # Ignore yellow objects smaller than this number of pixels
+MAXIMUM_DEPTH_AGE = 0.20 # Color and depth frames must be captured within this many seconds of each other
 
 @dataclass(frozen=True)
 class BananaDetection:
