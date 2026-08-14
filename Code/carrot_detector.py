@@ -1,8 +1,9 @@
 # carrot_detector.py:
-# Program takes Realsense camera input, and identifies a carrot (placed sideways) from live feed, 
+# Program takes Realsense camera input, and identifies a carrot (placed sideways) from live feed, also detects it's orientation & height from the main surface
 # Program then returns coordinates for 4 corners of a tight bounding box for carrot. Width of bounding box equal to that of the base of the carrot
-#   Also returns coordinates for the midpoint of the carrot, along with orientation
-#
+#   Also returns coordinates for the midpoint of the carrot, along with orientation needed for franka to pick up carrot
+# Highlights these coords with a blue dot on the live camera feed
+#These coords & orientations are then used by SALAD_V1 to pick up the carrot & place it at a certain preplanned location
 
 import numpy as np
 import rclpy

@@ -1,0 +1,3 @@
+# calls carrot detector code to detect coordinates & orientation for carrot midpoint. also parses that through code in coordinate transformer to convert camera coords to franka-compatible coords
+# calls on pick_place code to pick up carrot & then place carrot at predetermined location (placeholder for now)
+# then calls on vegtable cutter code to calculate & perform the cuts required to cut the carrot into even slices
