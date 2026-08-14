@@ -16,6 +16,7 @@ DETECTION_TIMEOUT = 20.0
 
 
 def main(args=None):
+    # Start ROS and create one executor to process camera and robot messages
     rclpy.init(args=args)
     executor = MultiThreadedExecutor(num_threads=3)
     detector = BananaDetector(show_debug=True)
@@ -23,10 +24,11 @@ def main(args=None):
     motion = None
 
     try:
+        # STEP 1: Wait until the detector sees the same banana for several frames
         detector.get_logger().info('Waiting for a stable banana detection')
         detection = detector.wait_for_detection(executor, timeout=DETECTION_TIMEOUT)
 
-        # Transform midpoint & long-axis orientation into the Franka base frame
+        # STEP 2: Convert the camera result into the Franka robot's coordinate frame
         pick_pos = transform_point(detection.midpoint_camera).tolist()
         banana_heading = transform_object_angle(detection.angle_camera)
         detector.get_logger().info(
@@ -34,12 +36,13 @@ def main(args=None):
             f"heading: {banana_heading:.3f} rad | height: {detection.surface_height:.3f} m"
         )
 
-        # Stop processing camera frames before robot motion begins
+        # STEP 3: Stop camera processing, then pick up and place the banana
         executor.remove_node(detector)
         motion = FrankaPickPlace(executor)
         motion.franka_pick(pick_pos, banana_heading, detection.surface_height)
         motion.franka_place(DEFAULT_PLACE_POS)
 
+        # STEP 4: The vegetable cutter will be called here once that file is ready
         motion.robot.get_logger().info(
             'Pick/place complete. Stopping before the vegetable_cutter.py stage.'
         )
@@ -50,6 +53,8 @@ def main(args=None):
         detector.get_logger().error(f'SALAD sequence failed safely: {error}')
         raise
     finally:
+        # This section runs after success, an error or Ctrl+C
+        # It stops robot velocity commands and shuts every ROS node down cleanly
         if motion is not None:
             motion.shutdown()
         try:

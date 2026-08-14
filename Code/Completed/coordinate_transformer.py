@@ -1,5 +1,5 @@
 # coordinate_transformer.py:
-# Converts carrot positions & orientations from the Realsense optical frame to the Franka base frame
+# Converts banana positions & orientations from the Realsense optical frame to the Franka base frame
 # Uses the hand-eye calibration stored in "franka camera tf.txt"
 
 from __future__ import annotations
@@ -57,17 +57,12 @@ def transform_direction(direction: Iterable[float]) -> np.ndarray:
     return direction_robot / magnitude
 
 
-def transform_carrot_angle(angle_camera: float) -> float:
-    """Convert the carrot's image-plane angle to a Franka-base XY heading."""
+def transform_object_angle(angle_camera: float) -> float:
+    """Convert the banana's image-plane angle to a Franka-base XY heading."""
     # Image x points right & image y points down in the Realsense optical frame
     direction_camera = [np.cos(angle_camera), np.sin(angle_camera), 0.0]
     direction_robot = transform_direction(direction_camera)
     return float(np.arctan2(direction_robot[1], direction_robot[0]))
-
-
-# Generic name used by SALAD when detecting another fruit with the same geometry
-def transform_object_angle(angle_camera: float) -> float:
-    return transform_carrot_angle(angle_camera)
 
 
 # Kept with the original function name so older SALAD scripts can still call it

@@ -15,7 +15,8 @@ class BananaDetectorTest(BananaDetector):
         super().__init__(show_debug=True)
         self._last_printed_stamp = -1.0
 
-        # Check for a new result separately so the detector code remains unchanged
+        # Run print_latest_detection ten times per second
+        # The timestamp check below prevents the same result from printing twice
         self._print_timer = self.create_timer(0.10, self.print_latest_detection)
         self.get_logger().info(
             "Live banana detector test started - press Ctrl+C in this terminal to stop"
@@ -27,6 +28,7 @@ class BananaDetectorTest(BananaDetector):
         if detection is None or detection.stamp_seconds == self._last_printed_stamp:
             return
 
+        # Remember this timestamp before printing the result
         self._last_printed_stamp = detection.stamp_seconds
         x, y, z = detection.midpoint_camera
         angle_degrees = math.degrees(detection.angle_camera)

@@ -2,6 +2,7 @@
 # Takes Realsense color, aligned depth & camera-info input and identifies one sideways banana
 # Returns a tight 4-corner box, banana midpoint, surface height & long-axis orientation
 # Keeps the newest valid result available for SALAD_V1 and publishes it as JSON for debugging
+# All distances returned by this program are in metres and all angles are in radians
 
 from __future__ import annotations
 
@@ -20,9 +21,22 @@ from sensor_msgs.msg import CameraInfo, Image as ROSImage
 from std_msgs.msg import String
 
 
+# These values select yellow pixels in an HSV image
+# Change these first if the banana is not detected under different lighting
+LOWER_YELLOW_HSV = np.array([18, 70, 70], dtype=np.uint8)
+UPPER_YELLOW_HSV = np.array([38, 255, 255], dtype=np.uint8)
+
+# Ignore yellow objects smaller than this number of pixels
+MINIMUM_BANANA_AREA = 1000.0
+
+# Color and depth frames must be captured within this many seconds of each other
+MAXIMUM_DEPTH_AGE = 0.20
+
+
 @dataclass(frozen=True)
 class BananaDetection:
-    """All geometry produced for one detected banana."""
+    # Pixel values are useful for drawing on the camera image
+    # Camera values are 3D [x, y, z] positions measured in metres
 
     midpoint_pixel: tuple[int, int]
     midpoint_camera: tuple[float, float, float]
@@ -36,26 +50,22 @@ class BananaDetection:
 
 class BananaDetector(Node):
 
-    def __init__(self, show_debug: bool = True, *, object_name: str = 'banana',
-                 lower_hsv=(18, 70, 70), upper_hsv=(38, 255, 255)):
-        super().__init__(f'{object_name}_detector')
+    def __init__(self, show_debug: bool = True):
+        super().__init__('banana_detector')
 
-        # Initialize CV Bridge & newest sensor values
+        # CV Bridge converts ROS image messages into OpenCV images
         self._bridge = CvBridge()
+
+        # These are filled when messages arrive from the Realsense camera
         self._depth_image: Optional[np.ndarray] = None
         self._depth_stamp_seconds = 0.0
         self._camera_matrix: Optional[np.ndarray] = None
+
+        # SALAD_V1 reads this variable after a banana is found
         self.latest_detection: Optional[BananaDetection] = None
         self.show_debug = show_debug
-        self.object_name = object_name
 
-        # Detection parameters - HSV values may need small adjustments for the room lighting
-        self.lower_yellow = np.array(lower_hsv, dtype=np.uint8)
-        self.upper_yellow = np.array(upper_hsv, dtype=np.uint8)
-        self.minimum_area = 1000.0
-        self.maximum_depth_age = 0.20
-
-        # Create subscriptions
+        # Subscribe to the color image, aligned depth image and camera calibration
         self.image_sub = self.create_subscription(
             ROSImage,
             '/camera/camera/color/image_raw',
@@ -74,14 +84,13 @@ class BananaDetector(Node):
             self.camera_info_callback,
             10,
         )
-        self.detection_pub = self.create_publisher(
-            String, f'/{self.object_name}/detection', 10
-        )
+        # The JSON topic makes it easy to inspect results with ros2 topic echo
+        self.detection_pub = self.create_publisher(String, '/banana/detection', 10)
 
-        self.get_logger().info(f"{self.object_name.capitalize()} detector started")
+        self.get_logger().info("Banana detector started")
 
     def camera_info_callback(self, msg: CameraInfo) -> None:
-        """Store camera intrinsics used to turn a depth pixel into metres."""
+        """Store the calibration values used to convert a pixel into a 3D point."""
         self._camera_matrix = np.asarray(msg.k, dtype=np.float64).reshape(3, 3)
 
     def depth_callback(self, msg: ROSImage) -> None:
@@ -89,7 +98,8 @@ class BananaDetector(Node):
         depth = self._bridge.imgmsg_to_cv2(msg, desired_encoding='passthrough')
         depth = np.asarray(depth, dtype=np.float32)
 
-        # Realsense 16-bit aligned depth is millimetres; 32-bit depth is normally metres
+        # Realsense 16-bit depth is in millimetres
+        # The rest of this project uses metres, so divide these values by 1000
         if msg.encoding in ('16UC1', 'mono16') or np.nanmedian(depth) > 20.0:
             depth *= 0.001
 
@@ -98,22 +108,34 @@ class BananaDetector(Node):
 
     @staticmethod
     def _stamp_seconds(msg: ROSImage) -> float:
+        """Convert a ROS timestamp into one floating-point seconds value."""
         return float(msg.header.stamp.sec) + float(msg.header.stamp.nanosec) * 1e-9
 
     @staticmethod
     def _find_banana_contour(image: np.ndarray, lower: np.ndarray,
                              upper: np.ndarray, minimum_area: float):
-        """Create a clean orange mask & return its largest banana-sized contour."""
+        """Create a clean yellow mask and return the largest banana-shaped region."""
+        # HSV separates color from brightness better than the camera's BGR format
         hsv_image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
         mask = cv2.inRange(hsv_image, lower, upper)
+
+        # Opening removes isolated dots; closing fills small holes in the banana
         kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5))
         mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel, iterations=1)
         mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel, iterations=2)
 
         contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-        contours = [contour for contour in contours if cv2.contourArea(contour) >= minimum_area]
-        contour = max(contours, key=cv2.contourArea) if contours else None
-        return contour, mask
+        large_contours = []
+        for contour in contours:
+            if cv2.contourArea(contour) >= minimum_area:
+                large_contours.append(contour)
+
+        if len(large_contours) == 0:
+            return None, mask
+
+        # Assume the largest valid yellow object is the banana
+        banana_contour = max(large_contours, key=cv2.contourArea)
+        return banana_contour, mask
 
     @staticmethod
     def _box_and_angle(contour) -> tuple[np.ndarray, float]:
@@ -121,7 +143,7 @@ class BananaDetector(Node):
         rectangle = cv2.minAreaRect(contour)
         corners = cv2.boxPoints(rectangle).astype(np.float32)
 
-        # Pick the longest rectangle edge, avoiding OpenCV's version-dependent angle rules
+        # Work out which side of the box is longest
         edges = np.roll(corners, -1, axis=0) - corners
         long_edge = edges[int(np.argmax(np.linalg.norm(edges, axis=1)))]
         angle = math.atan2(float(long_edge[1]), float(long_edge[0]))
@@ -137,55 +159,74 @@ class BananaDetector(Node):
         """Use a local median so a single missing depth pixel does not discard a detection."""
         if self._depth_image is None:
             return None
+
+        # Read a small square around the requested pixel
         height, width = self._depth_image.shape[:2]
         x0, x1 = max(0, x - radius), min(width, x + radius + 1)
         y0, y1 = max(0, y - radius), min(height, y + radius + 1)
         patch = self._depth_image[y0:y1, x0:x1]
         valid = patch[np.isfinite(patch) & (patch > 0.05) & (patch < 3.0)]
-        return float(np.median(valid)) if valid.size else None
+        if valid.size == 0:
+            return None
+
+        # The median is not badly affected by one incorrect depth pixel
+        return float(np.median(valid))
 
     def _deproject(self, pixel: tuple[int, int], depth: float) -> tuple[float, float, float]:
         """Deproject one aligned color pixel into the Realsense optical frame."""
         if self._camera_matrix is None:
             raise RuntimeError("Camera intrinsics have not arrived")
-        x, y = pixel
+        pixel_x, pixel_y = pixel
         fx, fy = self._camera_matrix[0, 0], self._camera_matrix[1, 1]
         cx, cy = self._camera_matrix[0, 2], self._camera_matrix[1, 2]
+
+        # Standard pinhole-camera equations
+        camera_x = (pixel_x - cx) * depth / fx
+        camera_y = (pixel_y - cy) * depth / fy
         return (
-            float((x - cx) * depth / fx),
-            float((y - cy) * depth / fy),
+            float(camera_x),
+            float(camera_y),
             float(depth),
         )
 
     def _estimate_surface_height(self, contour, banana_depth: float) -> float:
         """Estimate banana height using nearby table depth minus banana surface depth."""
+        # Make a filled mask of the banana
         contour_mask = np.zeros(self._depth_image.shape, dtype=np.uint8)
         cv2.drawContours(contour_mask, [contour], -1, 255, thickness=-1)
+
+        # The ring just outside that mask should contain the table surface
         outer = cv2.dilate(contour_mask, np.ones((31, 31), np.uint8))
         ring = (outer > 0) & (contour_mask == 0)
         values = self._depth_image[ring]
         values = values[np.isfinite(values) & (values > 0.05) & (values < 3.0)]
-        return max(0.0, float(np.median(values) - banana_depth)) if values.size else 0.0
+        if values.size == 0:
+            return 0.0
+
+        table_depth = float(np.median(values))
+        return max(0.0, table_depth - banana_depth)
 
     def image_callback(self, msg: ROSImage) -> None:
         """Identify the banana & store its newest complete 3D detection."""
+        # A 3D result cannot be calculated until depth and calibration arrive
         if self._depth_image is None or self._camera_matrix is None:
             return
 
         color_stamp = self._stamp_seconds(msg)
-        if abs(color_stamp - self._depth_stamp_seconds) > self.maximum_depth_age:
+        if abs(color_stamp - self._depth_stamp_seconds) > MAXIMUM_DEPTH_AGE:
             return
 
         image = self._bridge.imgmsg_to_cv2(msg, desired_encoding='bgr8')
         display = image.copy()
         contour, mask = self._find_banana_contour(
-            image, self.lower_yellow, self.upper_yellow, self.minimum_area
+            image, LOWER_YELLOW_HSV, UPPER_YELLOW_HSV, MINIMUM_BANANA_AREA
         )
 
         if contour is not None:
             corners_float, angle = self._box_and_angle(contour)
             moments = cv2.moments(contour)
             if moments['m00'] > 0.0:
+                # Image midpoint calculated from the yellow region's moments
                 midpoint = (
                     int(round(moments['m10'] / moments['m00'])),
                     int(round(moments['m01'] / moments['m00'])),
@@ -194,6 +235,7 @@ class BananaDetector(Node):
                 corners = tuple((int(round(x)), int(round(y))) for x, y in corners_float)
                 corner_depths = [self._valid_depth(*corner) for corner in corners]
 
+                # Only publish after all five returned pixels have valid depth
                 if midpoint_depth is not None and all(depth is not None for depth in corner_depths):
                     midpoint_camera = self._deproject(midpoint, midpoint_depth)
                     corners_camera = tuple(
@@ -213,7 +255,7 @@ class BananaDetector(Node):
                     self.latest_detection = detection
                     self.detection_pub.publish(String(data=json.dumps(asdict(detection))))
 
-                    # Highlight all returned image coordinates with blue dots
+                    # Green = detected outline; blue = returned coordinates and orientation
                     cv2.drawContours(display, [contour], -1, (0, 255, 0), 2)
                     for corner in corners:
                         cv2.circle(display, corner, 5, (255, 0, 0), -1)
@@ -225,8 +267,8 @@ class BananaDetector(Node):
                     cv2.line(display, midpoint, axis_end, (255, 0, 0), 2)
 
         if self.show_debug:
-            cv2.imshow(f'{self.object_name.capitalize()} Mask', mask)
-            cv2.imshow(f'{self.object_name.capitalize()} Detection', display)
+            cv2.imshow('Banana Mask', mask)
+            cv2.imshow('Banana Detection', display)
             cv2.waitKey(1)
 
     def wait_for_detection(self, executor, timeout: float = 15.0,
@@ -262,9 +304,7 @@ class BananaDetector(Node):
                         and np.max(np.abs(angle_errors)) < math.radians(8)):
                     return samples[-1]
 
-        raise TimeoutError(
-            f"No stable {self.object_name} detection was received before timeout"
-        )
+        raise TimeoutError("No stable banana detection was received before timeout")
 
     def destroy_node(self):
         if self.show_debug:
