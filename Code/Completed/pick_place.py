@@ -126,6 +126,7 @@ class FrankaPickPlace:
 
     def franka_pick(self, coords: Iterable[float], banana_heading: float,
                     surface_height: float = 0.0) -> None:
+        
         """Approach from above, pick the banana at its midpoint & retreat vertically."""
         pick_pos = np.asarray(self._position(coords))
         quat = grasp_quaternion(banana_heading)
@@ -133,6 +134,7 @@ class FrankaPickPlace:
         # Detector sees the banana's upper surface; descend only a limited amount toward its centre
         centre_offset = min(max(surface_height * 0.35, 0.0), 0.025)
         pick_pos[2] = max(0.05, pick_pos[2] - centre_offset)
+        
         # Approach from 12 cm above instead of moving sideways into the banana
         approach_pos = pick_pos.copy()
         approach_pos[2] += 0.12
