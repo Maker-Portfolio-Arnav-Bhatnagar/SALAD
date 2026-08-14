@@ -11,6 +11,7 @@ import time
 from typing import Iterable
 
 import numpy as np
+import rclpy
 from rclpy.executors import MultiThreadedExecutor
 
 
@@ -61,6 +62,26 @@ def grasp_quaternion(banana_heading: float) -> list[float]:
     return quaternion.tolist()
 
 
+# Move helper function taken directly from the working Franka reference code
+def move_and_wait(robotB, executor, pos, quat, name, timeout=8.0):
+    robotB.get_logger().info(f"Moving to {name}")
+    robotB.set_target(pos, quat)
+    robotB.reset_goal_reached()
+
+    start = time.time()
+    while rclpy.ok():
+        executor.spin_once(timeout_sec=0.01)
+
+        if robotB.goal_reached():
+            break
+
+        if time.time() - start > timeout:
+            robotB.get_logger().warn(f"Timeout at {name}")
+            break
+
+    time.sleep(0.3)
+
+
 class FrankaPickPlace:
 
     def __init__(self, executor: MultiThreadedExecutor):
@@ -103,29 +124,6 @@ class FrankaPickPlace:
             raise ValueError(f"Target is outside the configured safe workspace: {position.tolist()}")
         return position.tolist()
 
-    def move_and_wait(self, pos: Iterable[float], quat: Iterable[float],
-                      name: str, timeout: float = 10.0) -> None:
-        """Move to a target and raise an error instead of continuing after a timeout."""
-        position = self._position(pos)
-        quaternion = np.asarray(quat, dtype=np.float64).reshape(-1)
-        if quaternion.size != 4 or not np.all(np.isfinite(quaternion)):
-            raise ValueError("quat must contain four finite values")
-        quaternion /= np.linalg.norm(quaternion)
-
-        self.robot.get_logger().info(f"Moving to {name}")
-        self.robot.set_target(position, quaternion.tolist())
-        self.robot.reset_goal_reached()
-        deadline = time.monotonic() + timeout
-
-        while time.monotonic() < deadline:
-            self.executor.spin_once(timeout_sec=0.01)
-            if self.robot.goal_reached():
-                time.sleep(0.25)
-                return
-
-        self.robot.publish_zero_velocity()
-        raise TimeoutError(f"Franka timed out while moving to {name}")
-
     def franka_pick(self, coords: Iterable[float], banana_heading: float,
                     surface_height: float = 0.0) -> None:
         """Approach from above, pick the banana at its midpoint & retreat vertically."""
@@ -142,12 +140,12 @@ class FrankaPickPlace:
         # PICK SEQUENCE: open -> approach -> descend -> close -> lift
         self.gripper.open_gripper(width=0.08)
         time.sleep(0.5)
-        self.move_and_wait(approach_pos, quat, 'BANANA_APPROACH')
-        self.move_and_wait(pick_pos, quat, 'BANANA_PICK')
+        move_and_wait(self.robot, self.executor, approach_pos, quat, 'BANANA_APPROACH')
+        move_and_wait(self.robot, self.executor, pick_pos, quat, 'BANANA_PICK')
         self.robot.get_logger().info('Closing gripper')
         self.gripper.close_gripper(width=0.025, force=20.0)
         time.sleep(0.8)
-        self.move_and_wait(approach_pos, quat, 'BANANA_RETREAT')
+        move_and_wait(self.robot, self.executor, approach_pos, quat, 'BANANA_RETREAT')
 
     def franka_place(self, coords: Iterable[float] = DEFAULT_PLACE_POS,
                      quat: Iterable[float] = DEFAULT_PLACE_QUAT) -> None:
@@ -157,12 +155,12 @@ class FrankaPickPlace:
         approach_pos[2] += 0.12
 
         # PLACE SEQUENCE: approach -> descend -> open -> lift -> rest
-        self.move_and_wait(approach_pos, quat, 'PLACE_APPROACH')
-        self.move_and_wait(place_pos, quat, 'PLACE_POSITION')
+        move_and_wait(self.robot, self.executor, approach_pos, quat, 'PLACE_APPROACH')
+        move_and_wait(self.robot, self.executor, place_pos, quat, 'PLACE_POSITION')
         self.gripper.open_gripper(width=0.08)
         time.sleep(0.6)
-        self.move_and_wait(approach_pos, quat, 'PLACE_RETREAT')
-        self.move_and_wait(REST_POS, REST_QUAT, 'REST_POSITION')
+        move_and_wait(self.robot, self.executor, approach_pos, quat, 'PLACE_RETREAT')
+        move_and_wait(self.robot, self.executor, REST_POS, REST_QUAT, 'REST_POSITION')
 
     def shutdown(self) -> None:
         """Always leave the velocity controller stopped."""
