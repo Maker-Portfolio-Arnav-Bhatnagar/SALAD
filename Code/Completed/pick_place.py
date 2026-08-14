@@ -1,5 +1,5 @@
 # pick_place.py:
-# Contains the Franka motion functions used by SALAD_V1 to pick up & place the carrot
+# Contains the Franka motion functions used by SALAD_V1 to pick up & place the banana
 # Uses a safe approach/retreat waypoint and stops the sequence if any target times out
 
 from __future__ import annotations
@@ -52,9 +52,9 @@ def _quaternion_multiply(left: np.ndarray, right: np.ndarray) -> np.ndarray:
     ])
 
 
-def grasp_quaternion(carrot_heading: float) -> list[float]:
-    """Rotate the tool-down pose so the gripper aligns with the carrot's long axis."""
-    half = carrot_heading / 2.0
+def grasp_quaternion(banana_heading: float) -> list[float]:
+    """Rotate the tool-down pose so the gripper aligns with the banana's long axis."""
+    half = banana_heading / 2.0
     yaw_quaternion = np.array([0.0, 0.0, math.sin(half), math.cos(half)])
     quaternion = _quaternion_multiply(yaw_quaternion, DEFAULT_TOOL_QUAT)
     quaternion /= np.linalg.norm(quaternion)
@@ -123,13 +123,13 @@ class FrankaPickPlace:
         self.robot.publish_zero_velocity()
         raise TimeoutError(f"Franka timed out while moving to {name}")
 
-    def franka_pick(self, coords: Iterable[float], carrot_heading: float,
+    def franka_pick(self, coords: Iterable[float], banana_heading: float,
                     surface_height: float = 0.0) -> None:
-        """Approach from above, pick the carrot at its midpoint & retreat vertically."""
+        """Approach from above, pick the banana at its midpoint & retreat vertically."""
         pick_pos = np.asarray(self._position(coords))
-        quat = grasp_quaternion(carrot_heading)
+        quat = grasp_quaternion(banana_heading)
 
-        # Detector sees the carrot's upper surface; descend only a limited amount toward its centre
+        # Detector sees the banana's upper surface; descend only a limited amount toward its centre
         centre_offset = min(max(surface_height * 0.35, 0.0), 0.025)
         pick_pos[2] = max(0.05, pick_pos[2] - centre_offset)
         approach_pos = pick_pos.copy()
@@ -137,16 +137,16 @@ class FrankaPickPlace:
 
         self.gripper.open_gripper(width=0.08)
         time.sleep(0.5)
-        self.move_and_wait(approach_pos, quat, 'CARROT_APPROACH')
-        self.move_and_wait(pick_pos, quat, 'CARROT_PICK')
+        self.move_and_wait(approach_pos, quat, 'BANANA_APPROACH')
+        self.move_and_wait(pick_pos, quat, 'BANANA_PICK')
         self.robot.get_logger().info('Closing gripper')
         self.gripper.close_gripper(width=0.025, force=20.0)
         time.sleep(0.8)
-        self.move_and_wait(approach_pos, quat, 'CARROT_RETREAT')
+        self.move_and_wait(approach_pos, quat, 'BANANA_RETREAT')
 
     def franka_place(self, coords: Iterable[float] = DEFAULT_PLACE_POS,
                      quat: Iterable[float] = DEFAULT_PLACE_QUAT) -> None:
-        """Move above the cutting board, place the carrot & return to rest."""
+        """Move above the cutting board, place the banana & return to rest."""
         place_pos = np.asarray(self._position(coords))
         approach_pos = place_pos.copy()
         approach_pos[2] += 0.12
@@ -166,9 +166,9 @@ class FrankaPickPlace:
 
 
 # Module-level wrappers are kept for the interface requested by the original stub
-def franka_pick(coords, carrot_heading, controller: FrankaPickPlace,
+def franka_pick(coords, banana_heading, controller: FrankaPickPlace,
                 surface_height: float = 0.0):
-    controller.franka_pick(coords, carrot_heading, surface_height)
+    controller.franka_pick(coords, banana_heading, surface_height)
 
 
 def franka_place(coords, controller: FrankaPickPlace):
