@@ -26,7 +26,7 @@ def main(args=None):
     try:
         # STEP 1: Wait until the detector sees the same banana for several frames
         detector.get_logger().info('Waiting for a stable banana detection')
-        detection = detector.wait_for_detection(executor, timeout=DETECTION_TIMEOUT)
+        detection = detector.wait_for_detection(executor, timeout=DETECTION_TIMEOUT, stable_frames=3)
 
         # STEP 2: Convert the camera result into the Franka robot's coordinate frame
         pick_pos = transform_point(detection.midpoint_camera).tolist()
