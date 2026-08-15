@@ -29,6 +29,11 @@ from utils.gripper_commands.franka_gripper import FrankaGripperController
 # Orientation measured from the working Franka reference program
 DEFAULT_TOOL_QUAT = np.array([0.9216499759579432, -0.38669263218892913, 0.031486742575119436, -0.006222143483426112], dtype=np.float64)
 
+# Vertical distance from fr3_link8 to the point between the gripper fingers
+# The detector returns the banana surface, but the controller moves fr3_link8
+# 0.13 m makes the detected z=0.019 m correspond to a link8 target near z=0.149 m
+GRIPPER_TO_GRASP_Z_OFFSET = 0.130
+
 # Placeholder cutting-board location from the working Franka reference program
 DEFAULT_PLACE_POS = [0.49262495730561356, -0.5186854477752654, 0.16798802875832192]
 DEFAULT_PLACE_QUAT = [0.9251516457019573, -0.3795919664139947, 0.0012463626502968118, 0.0016787105351086956]
@@ -124,12 +129,19 @@ class FrankaPickPlace:
                     surface_height: float = 0.0) -> None:
         
         """Approach from above, pick the banana at its midpoint & retreat vertically."""
-        pick_pos = np.asarray(self._position(coords))
+        detected_pos = np.asarray(coords, dtype=np.float64).reshape(-1)
+        if detected_pos.size != 3 or not np.all(np.isfinite(detected_pos)):
+            raise ValueError("coords must contain three finite values")
+
         quat = grasp_quaternion(banana_heading)
 
-        # Detector sees the banana's upper surface; descend only a limited amount toward its centre
+        # The detector gives the banana's upper surface, not the fr3_link8 target
+        # Add the gripper length, then move slightly toward the banana's centre
         centre_offset = min(max(surface_height * 0.35, 0.0), 0.025)
-        pick_pos[2] = max(0.05, pick_pos[2] - centre_offset)
+        detected_pos[2] += GRIPPER_TO_GRASP_Z_OFFSET - centre_offset
+
+        # Check the corrected link8 target before sending any robot movement
+        pick_pos = np.asarray(self._position(detected_pos))
         
         # Approach from 12 cm above instead of moving sideways into the banana
         approach_pos = pick_pos.copy()
