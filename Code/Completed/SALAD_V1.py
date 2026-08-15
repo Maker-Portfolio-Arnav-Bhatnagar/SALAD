@@ -16,9 +16,8 @@ from pick_place import DEFAULT_PLACE_POS, FrankaPickPlace
 DETECTION_TIMEOUT = 20.0
 
 def main(args=None):
-    # Start ROS, then wait 5 seconds before running the SALAD sequence
+    # Start ROS
     rclpy.init(args=args)
-    time.sleep(5.0)
 
     # Create one executor to process camera and robot messages
     executor = MultiThreadedExecutor(num_threads=3)
@@ -38,6 +37,10 @@ def main(args=None):
             f"Stable banana found | Franka midpoint: {pick_pos} | "
             f"heading: {banana_heading:.3f} rad | height: {detection.surface_height:.3f} m"
         )
+
+        # Give the operator 5 seconds before any robot movement begins
+        detector.get_logger().info('Robot movement will begin in 5 seconds')
+        time.sleep(5.0)
 
         # STEP 3: Pick up and place the banana
         # Keep the detector in the executor so it continues receiving camera frames
