@@ -4,6 +4,8 @@
 
 from __future__ import annotations
 
+import time
+
 import rclpy
 from rclpy.executors import MultiThreadedExecutor
 
@@ -14,8 +16,11 @@ from pick_place import DEFAULT_PLACE_POS, FrankaPickPlace
 DETECTION_TIMEOUT = 20.0
 
 def main(args=None):
-    # Start ROS and create one executor to process camera and robot messages
+    # Start ROS, then wait 5 seconds before running the SALAD sequence
     rclpy.init(args=args)
+    time.sleep(5.0)
+
+    # Create one executor to process camera and robot messages
     executor = MultiThreadedExecutor(num_threads=3)
     detector = BananaDetector(show_debug=True)
     executor.add_node(detector)
