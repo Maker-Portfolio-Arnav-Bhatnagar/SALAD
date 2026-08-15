@@ -9,21 +9,34 @@ import rclpy
 from rclpy.executors import SingleThreadedExecutor
 
 from banana_detector import BananaDetector
+from coordinate_transformer import (
+    transform_object_angle,
+    transform_point,
+    transform_points,
+)
 
 
 def print_detection(node, detection):
     """Print one stable banana detection to the terminal."""
-    x, y, z = detection.midpoint_camera
-    angle_degrees = math.degrees(detection.angle_camera)
+    # Convert the detector's camera-frame result into the Franka base frame
+    midpoint_franka = transform_point(detection.midpoint_camera)
+    corners_franka = transform_points(detection.corners_camera)
+    angle_franka = transform_object_angle(detection.angle_camera)
+
+    x, y, z = midpoint_franka
+    angle_degrees = math.degrees(angle_franka)
+
+    # Convert NumPy arrays into normal lists so they print clearly
+    corners_franka = corners_franka.tolist()
 
     node.get_logger().info(
         "\n"
         f"Stable banana midpoint pixel: {detection.midpoint_pixel}\n"
-        f"Stable banana midpoint camera coords (m): "
+        f"Stable banana midpoint Franka coords (m): "
         f"x={x:.4f}, y={y:.4f}, z={z:.4f}\n"
         f"Bounding-box corners pixels: {detection.corners_pixel}\n"
-        f"Bounding-box corners camera coords (m): {detection.corners_camera}\n"
-        f"Banana orientation: {detection.angle_camera:.4f} rad "
+        f"Bounding-box corners Franka coords (m): {corners_franka}\n"
+        f"Banana orientation in Franka frame: {angle_franka:.4f} rad "
         f"({angle_degrees:.2f} deg)\n"
         f"Estimated height above surface: {detection.surface_height:.4f} m"
     )
