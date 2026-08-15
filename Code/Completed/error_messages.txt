@@ -1,14 +1,14 @@
 /bin/python3 "/home/iitgn-robotics/Debojit_WS/RC-DS/Dual_Arm/WBCD/Arnav Bhatnagar (summer 2026 intern)/SALAD_V1.py"
-[INFO] [1786782583.474406379] [banana_detector]: Banana detector started
-[INFO] [1786782583.474860093] [banana_detector]: Waiting for a stable banana detection
-[INFO] [1786782583.883305802] [banana_detector]: Stable banana found | Franka midpoint: [0.600976503814686, -0.2743279758189732, 0.018802469781161957] | heading: -2.934 rad | height: 0.023 m
-[INFO] [1786782583.888820029] [dls_velocity_commander_robotB]: [robotB] Started. Waiting for URDF + joint_states...
+[INFO] [1786783197.959188950] [banana_detector]: Banana detector started
+[INFO] [1786783197.959546257] [banana_detector]: Waiting for a stable banana detection
+[INFO] [1786783198.200996512] [banana_detector]: Stable banana found | Franka midpoint: [0.43889601161969216, -0.15041162638809674, 0.019886914683040713] | heading: -2.973 rad | height: 0.024 m
+[INFO] [1786783198.211165010] [dls_velocity_commander_robotB]: [robotB] Started. Waiting for URDF + joint_states...
   base_link=fr3_link0, tip_link=fr3_link8
   joint_state_topic=/NS_1/franka/joint_states
   cmd_topic=/NS_1/joint_velocity_controller/commands
   robot_description_topic=/NS_1/robot_description
-[ERROR] [1786782583.889275598] [banana_detector]: SALAD sequence failed safely: Target is outside the configured safe workspace: [0.600976503814686, -0.2743279758189732, 0.018802469781161957]
-[INFO] [1786782583.889935955] [dls_velocity_commander_robotB]: [robotB] Published zero velocity.
+[ERROR] [1786783198.212048446] [banana_detector]: SALAD sequence failed safely: Target is outside the configured safe workspace: [0.43889601161969216, -0.15041162638809674, 0.019886914683040713]
+[INFO] [1786783198.212989885] [dls_velocity_commander_robotB]: [robotB] Published zero velocity.
 Traceback (most recent call last):
   File "/home/iitgn-robotics/Debojit_WS/RC-DS/Dual_Arm/WBCD/Arnav Bhatnagar (summer 2026 intern)/SALAD_V1.py", line 87, in <module>
     main()
@@ -18,4 +18,4 @@ Traceback (most recent call last):
     pick_pos = np.asarray(self._position(coords))
   File "/home/iitgn-robotics/Debojit_WS/RC-DS/Dual_Arm/WBCD/Arnav Bhatnagar (summer 2026 intern)/pick_place.py", line 120, in _position
     raise ValueError(f"Target is outside the configured safe workspace: {position.tolist()}")
-ValueError: Target is outside the configured safe workspace: [0.600976503814686, -0.2743279758189732, 0.018802469781161957]
+ValueError: Target is outside the configured safe workspace: [0.43889601161969216, -0.15041162638809674, 0.019886914683040713]
