@@ -29,10 +29,11 @@ from utils.gripper_commands.franka_gripper import FrankaGripperController
 # Orientation measured from the working Franka reference program
 DEFAULT_TOOL_QUAT = np.array([0.9216499759579432, -0.38669263218892913, 0.031486742575119436, -0.006222143483426112], dtype=np.float64)
 
-# Vertical distance from fr3_link8 to the point between the gripper fingers
-# The detector returns the banana surface, but the controller moves fr3_link8
-# 0.13 m makes the detected z=0.019 m correspond to a link8 target near z=0.149 m
-GRIPPER_TO_GRASP_Z_OFFSET = 0.130
+# Franka's standard vertical offset from link8 to the hand grasp frame
+GRIPPER_TO_GRASP_Z_OFFSET = 0.1034
+
+# The desired grasp point is 2 cm below the banana's detected top surface
+BANANA_TOP_TO_GRASP_OFFSET = 0.020
 
 # Placeholder cutting-board location from the working Franka reference program
 DEFAULT_PLACE_POS = [0.49262495730561356, -0.5186854477752654, 0.16798802875832192]
@@ -135,10 +136,11 @@ class FrankaPickPlace:
 
         quat = grasp_quaternion(banana_heading)
 
-        # The detector gives the banana's upper surface, not the fr3_link8 target
-        # Add the gripper length, then move slightly toward the banana's centre
-        centre_offset = min(max(surface_height * 0.35, 0.0), 0.025)
-        detected_pos[2] += GRIPPER_TO_GRASP_Z_OFFSET - centre_offset
+        # Convert the detected banana surface into the required link8 target height
+        # First move 2 cm down to the grasp level, then add the gripper-frame offset
+        detected_pos[2] += (
+            GRIPPER_TO_GRASP_Z_OFFSET - BANANA_TOP_TO_GRASP_OFFSET
+        )
 
         # Check the corrected link8 target before sending any robot movement
         pick_pos = np.asarray(self._position(detected_pos))
