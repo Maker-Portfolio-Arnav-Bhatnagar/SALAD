@@ -34,15 +34,34 @@ def main(args=None):
             f"heading: {banana_heading:.3f} rad | height: {detection.surface_height:.3f} m"
         )
 
-        # STEP 3: Stop camera processing, then pick up and place the banana
-        executor.remove_node(detector)
+        # STEP 3: Pick up and place the banana
+        # Keep the detector in the executor so it continues receiving camera frames
         motion = FrankaPickPlace(executor)
         motion.franka_pick(pick_pos, banana_heading, detection.surface_height)
         motion.franka_place(DEFAULT_PLACE_POS)
 
-        # STEP 4: The vegetable cutter will be called here once that file is ready
+        # STEP 4: Detect the banana again after it has been placed
+        # Clear the old result so only new post-placement frames can be selected
+        detector.latest_detection = None
+        detector.get_logger().info('Detecting the banana at its placed location')
+        placed_detection = detector.wait_for_detection(
+            executor,
+            timeout=DETECTION_TIMEOUT,
+            stable_frames=3,
+        )
+
+        placed_pos = transform_point(placed_detection.midpoint_camera).tolist()
+        placed_heading = transform_object_angle(placed_detection.angle_camera)
+        detector.get_logger().info(
+            f"Placed banana found | Franka midpoint: {placed_pos} | "
+            f"heading: {placed_heading:.3f} rad | "
+            f"height: {placed_detection.surface_height:.3f} m"
+        )
+
+        # STEP 5: The vegetable cutter will use placed_pos & placed_heading here
         motion.robot.get_logger().info(
-            'Pick/place complete. Stopping before the vegetable_cutter.py stage.'
+            'Post-placement detection complete. '
+            'Stopping before the vegetable_cutter.py stage.'
         )
 
     except (KeyboardInterrupt, TimeoutError):
