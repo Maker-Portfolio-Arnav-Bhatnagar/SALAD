@@ -11,9 +11,7 @@ from banana_detector import BananaDetector
 from coordinate_transformer import transform_object_angle, transform_point
 from pick_place import DEFAULT_PLACE_POS, FrankaPickPlace
 
-
 DETECTION_TIMEOUT = 20.0
-
 
 def main(args=None):
     # Start ROS and create one executor to process camera and robot messages
