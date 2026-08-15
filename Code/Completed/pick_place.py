@@ -29,9 +29,6 @@ from utils.gripper_commands.franka_gripper import FrankaGripperController
 # Orientation measured from the working Franka reference program
 DEFAULT_TOOL_QUAT = np.array([0.9216499759579432, -0.38669263218892913, 0.031486742575119436, -0.006222143483426112], dtype=np.float64)
 
-# The desired grasp point is 2 cm below the detected banana midpoint
-BANANA_TOP_TO_GRASP_OFFSET = 0.020
-
 # Placeholder cutting-board location from the working Franka reference program
 DEFAULT_PLACE_POS = [0.49262495730561356, -0.5186854477752654, 0.16798802875832192]
 DEFAULT_PLACE_QUAT = [0.9251516457019573, -0.3795919664139947, 0.0012463626502968118, 0.0016787105351086956]
@@ -119,7 +116,7 @@ class FrankaPickPlace:
 
         # Conservative Franka workspace check - rejects bad camera data before any movement
         x, y, z = position
-        if not (0.20 <= x <= 0.80 and -0.70 <= y <= 0.45 and -0.05 <= z <= 0.75):
+        if not (0.20 <= x <= 0.80 and -0.70 <= y <= 0.45 and 0.00 <= z <= 0.75):
             raise ValueError(f"Target is outside the configured safe workspace: {position.tolist()}")
         return position.tolist()
 
@@ -127,12 +124,8 @@ class FrankaPickPlace:
                     surface_height: float = 0.0) -> None:
         
         """Approach from above, pick the banana at its midpoint & retreat vertically."""
-        # Move 2 cm below the detected top surface to reach the grasp point
-        pick_pos = np.asarray(coords, dtype=np.float64).reshape(-1)
-        if pick_pos.size != 3 or not np.all(np.isfinite(pick_pos)):
-            raise ValueError("coords must contain three finite values")
-        pick_pos[2] -= BANANA_TOP_TO_GRASP_OFFSET
-        pick_pos = np.asarray(self._position(pick_pos))
+        # Use the transformed banana midpoint directly without changing its Z value
+        pick_pos = np.asarray(self._position(coords))
         quat = grasp_quaternion(banana_heading)
         
         # Approach from 12 cm above instead of moving sideways into the banana
@@ -143,7 +136,7 @@ class FrankaPickPlace:
         self.gripper.open_gripper(width=0.08)
         time.sleep(0.5)
         move_and_wait(self.robot, self.executor, approach_pos, quat, 'BANANA_APPROACH')
-        move_and_wait(self.robot, self.executor, pick_pos, quat, 'BANANA_PICK')
+        #move_and_wait(self.robot, self.executor, pick_pos, quat, 'BANANA_PICK')
         self.robot.get_logger().info('Closing gripper')
         self.gripper.close_gripper(width=0.025, force=20.0)
         time.sleep(0.8)
