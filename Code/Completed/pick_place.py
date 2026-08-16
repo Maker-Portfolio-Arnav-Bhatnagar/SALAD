@@ -143,17 +143,18 @@ class FrankaPickPlace:
 
     def franka_place(self, coords: Iterable[float] = DEFAULT_PLACE_POS,
                      quat: Iterable[float] = DEFAULT_PLACE_QUAT) -> None:
-        """Move above the cutting board, place the banana & return to rest."""
+        """Move directly to the place coordinates, release the banana & return to rest."""
         place_pos = np.asarray(self._position(coords))
-        approach_pos = place_pos.copy()
-        approach_pos[2] += 0.12
 
-        # PLACE SEQUENCE: approach -> descend -> open -> lift -> rest
-        move_and_wait(self.robot, self.executor, approach_pos, quat, 'PLACE_APPROACH')
+        # PLACE SEQUENCE: move directly to place -> open -> lift -> rest
         move_and_wait(self.robot, self.executor, place_pos, quat, 'PLACE_POSITION')
         self.gripper.open_gripper(width=0.08)
         time.sleep(0.6)
-        move_and_wait(self.robot, self.executor, approach_pos, quat, 'PLACE_RETREAT')
+
+        # Lift 12 cm after releasing the banana
+        retreat_pos = place_pos.copy()
+        retreat_pos[2] += 0.12
+        move_and_wait(self.robot, self.executor, retreat_pos, quat, 'PLACE_RETREAT')
         move_and_wait(self.robot, self.executor, REST_POS, REST_QUAT, 'REST_POSITION')
 
     def shutdown(self) -> None:
