@@ -17,6 +17,10 @@ T_CAM_TO_ROBOT = np.array([
     [0.0000, 0.0000, 0.0000, 1.0000],
 ], dtype=np.float64)
 
+# The banana is on a platform 12 cm above the original working surface
+# This is applied after the camera-to-Franka transformation
+BANANA_PLATFORM_Z_OFFSET = 0.12
+
 
 def _vector(values: Iterable[float], length: int, name: str) -> np.ndarray:
     """Convert an input to a finite one-dimensional vector."""
@@ -32,7 +36,11 @@ def transform_point(coords: Iterable[float]) -> np.ndarray:
     """Transform one [x, y, z] point from camera frame to Franka base frame."""
     point_camera = _vector(coords, 3, "coords")
     point_homogeneous = np.append(point_camera, 1.0)
-    return (T_CAM_TO_ROBOT @ point_homogeneous)[:3]
+    point_robot = (T_CAM_TO_ROBOT @ point_homogeneous)[:3]
+
+    # Add the platform height after completing the normal transformation
+    point_robot[2] += BANANA_PLATFORM_Z_OFFSET
+    return point_robot
 
 
 def transform_points(coords: Iterable[Iterable[float]]) -> np.ndarray:
@@ -44,7 +52,11 @@ def transform_points(coords: Iterable[Iterable[float]]) -> np.ndarray:
         raise ValueError("coords contains a non-finite value")
 
     homogeneous = np.column_stack((points_camera, np.ones(len(points_camera))))
-    return (T_CAM_TO_ROBOT @ homogeneous.T).T[:, :3]
+    points_robot = (T_CAM_TO_ROBOT @ homogeneous.T).T[:, :3]
+
+    # Apply the same platform offset to every transformed corner
+    points_robot[:, 2] += BANANA_PLATFORM_Z_OFFSET
+    return points_robot
 
 
 def transform_direction(direction: Iterable[float]) -> np.ndarray:
