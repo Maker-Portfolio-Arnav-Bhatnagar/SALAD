@@ -127,9 +127,14 @@ class FrankaPickPlace:
         pick_pos = np.asarray(self._position(coords))
         quat = grasp_quaternion(banana_heading)
 
-        # PICK SEQUENCE: open -> move directly to detected coords -> close -> lift
+        # Create a waypoint 5 cm directly above the banana
+        pre_pick_pos = pick_pos.copy()
+        pre_pick_pos[2] += 0.05
+
+        # PICK SEQUENCE: open -> pre-pick waypoint -> pick -> close -> lift
         self.gripper.open_gripper(width=0.08)
         time.sleep(0.5)
+        move_and_wait(self.robot, self.executor, pre_pick_pos, quat, 'BANANA_PRE_PICK')
         move_and_wait(self.robot, self.executor, pick_pos, quat, 'BANANA_PICK')
         self.robot.get_logger().info('Closing gripper')
         self.gripper.close_gripper(width=0.025, force=20.0)
