@@ -36,7 +36,6 @@ REST_POS = [0.3584641619510052, -0.036976077522332576, 0.49373634152165496]
 REST_QUAT = [0.9216499759579432, -0.38669263218892913, 0.031486742575119436, -0.006222143483426112]
 
 
-
 def _quaternion_multiply(left: np.ndarray, right: np.ndarray) -> np.ndarray:
     """Multiply [x, y, z, w] quaternions."""
     lx, ly, lz, lw = left
