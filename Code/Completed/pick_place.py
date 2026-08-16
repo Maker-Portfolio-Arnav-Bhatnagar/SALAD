@@ -123,24 +123,23 @@ class FrankaPickPlace:
     def franka_pick(self, coords: Iterable[float], banana_heading: float,
                     surface_height: float = 0.0) -> None:
         
-        """Approach from above, pick the banana at its midpoint & retreat vertically."""
+        """Move directly to the detected midpoint, pick the banana & lift it."""
         # Use the transformed banana midpoint directly without changing its Z value
         pick_pos = np.asarray(self._position(coords))
         quat = grasp_quaternion(banana_heading)
-        
-        # Approach from 12 cm above instead of moving sideways into the banana
-        approach_pos = pick_pos.copy()
-        approach_pos[2] += 0.12
 
-        # PICK SEQUENCE: open -> approach -> descend -> close -> lift
+        # PICK SEQUENCE: open -> move directly to detected coords -> close -> lift
         self.gripper.open_gripper(width=0.08)
         time.sleep(0.5)
-        move_and_wait(self.robot, self.executor, approach_pos, quat, 'BANANA_APPROACH')
-        #move_and_wait(self.robot, self.executor, pick_pos, quat, 'BANANA_PICK')
+        move_and_wait(self.robot, self.executor, pick_pos, quat, 'BANANA_PICK')
         self.robot.get_logger().info('Closing gripper')
         self.gripper.close_gripper(width=0.025, force=20.0)
         time.sleep(0.8)
-        move_and_wait(self.robot, self.executor, approach_pos, quat, 'BANANA_RETREAT')
+
+        # Lift 12 cm after the banana is held
+        retreat_pos = pick_pos.copy()
+        retreat_pos[2] += 0.12
+        move_and_wait(self.robot, self.executor, retreat_pos, quat, 'BANANA_RETREAT')
 
     def franka_place(self, coords: Iterable[float] = DEFAULT_PLACE_POS,
                      quat: Iterable[float] = DEFAULT_PLACE_QUAT) -> None:
