@@ -19,7 +19,7 @@ T_CAM_TO_ROBOT = np.array([
 
 # The banana is on a platform 12 cm above the original working surface
 # This is applied after the camera-to-Franka transformation
-BANANA_PLATFORM_Z_OFFSET = 0.09
+BANANA_PLATFORM_Z_OFFSET = 0.09  
 
 
 def _vector(values: Iterable[float], length: int, name: str) -> np.ndarray:
